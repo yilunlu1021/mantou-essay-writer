@@ -7,3 +7,18 @@ my essay/
 .env*
 .DS_Store
 artifacts/
+# Generated writing sessions can live in any user-chosen folder.
+**/session.json
+**/original.bin
+**/original.json
+**/versions/
+**/.writer-lock/
+**/.recovery-lock/
+**/.stale-lock-*/
+# Input/patch names used in the guide. Keep all other real drafts outside Git.
+/draft.*
+/prompt.txt
+/edits*.json
+*.docx
+*.doc
+*.pdf
