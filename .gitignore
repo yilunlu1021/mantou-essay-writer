@@ -1,0 +1,9 @@
+node_modules/
+**/dist/
+.essay-work/
+my demo/
+my essay/
+*.log
+.env*
+.DS_Store
+artifacts/

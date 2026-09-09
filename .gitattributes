@@ -1,0 +1,13 @@
+* text=auto
+*.md text eol=lf
+*.ts text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.sh text eol=lf
+*.ps1 text eol=lf
+*.docx binary
+*.zip binary
+# Bundles contain third-party template literals whose whitespace is intentional.
+bin/*.mjs -whitespace

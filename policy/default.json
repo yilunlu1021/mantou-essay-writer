@@ -1,0 +1,844 @@
+{
+  "id": "mantou-language-public",
+  "version": "1.4.0",
+  "sources": [
+    {
+      "path": "policy/language-standards.md",
+      "version": "1.4.0",
+      "sha256": "1b005a7a6c6654be4f4b780cc5780ffe45b58a57bef8a510a1d9c55635b79d85",
+      "normalization": "lf-utf8"
+    },
+    {
+      "path": "policy/collaboration-writing.md",
+      "version": "1.10.0",
+      "sha256": "ad4e36f2ec18ca2596d8023ff8bf5bfaa08900cb1d35d84c694808fcfb9ba5f6",
+      "normalization": "lf-utf8"
+    }
+  ],
+  "rules": [
+    {
+      "id": "G01",
+      "source": "policy/language-standards.md :: 适用范围",
+      "requirement": "适用范围：所有交付物与三类语言，内部内容成为交付物后也适用",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "G02",
+      "source": "policy/language-standards.md :: 适用范围",
+      "requirement": "适用范围：更具体要求可覆盖默认表达，事实、voice、证据与非空洞原则继续有效，规则冲突须裁决",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "G03",
+      "source": "policy/language-standards.md :: 目标",
+      "requirement": "目标：每句提供信息或建立逻辑，避免浮夸、机械、空洞和面面俱到",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "G04",
+      "source": "policy/language-standards.md :: 目标",
+      "requirement": "目标：写作质量与真实作者一致，检测器分数不能决定好坏",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "M01",
+      "source": "policy/language-standards.md :: 标点",
+      "requirement": "标点：禁用两类长横线、分号，英文使用直引号，允许中文「」",
+      "scope": "all",
+      "check": "punctuation",
+      "manualRequired": false,
+      "exemptOriginal": true,
+      "terms": []
+    },
+    {
+      "id": "M02",
+      "source": "policy/language-standards.md :: 一、机械规则",
+      "requirement": "机械规则总例外：直接引用、代码、URL、正式名称及保留原貌的证据须清楚标明",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": true,
+      "terms": []
+    },
+    {
+      "id": "M03",
+      "source": "policy/language-standards.md :: 英文禁词",
+      "requirement": "英文禁词：完整词表及词形，navigate 限比喻义，harness 限动词，landscape 限抽象义",
+      "scope": "all",
+      "check": "english-terms",
+      "manualRequired": true,
+      "exemptOriginal": true,
+      "terms": [
+        {
+          "value": "spark",
+          "conditional": false
+        },
+        {
+          "value": "delve",
+          "conditional": false
+        },
+        {
+          "value": "navigate",
+          "conditional": true
+        },
+        {
+          "value": "foster",
+          "conditional": false
+        },
+        {
+          "value": "leverage",
+          "conditional": false
+        },
+        {
+          "value": "harness",
+          "conditional": true
+        },
+        {
+          "value": "unlock",
+          "conditional": false
+        },
+        {
+          "value": "unleash",
+          "conditional": false
+        },
+        {
+          "value": "landscape",
+          "conditional": true
+        },
+        {
+          "value": "tapestry",
+          "conditional": false
+        },
+        {
+          "value": "realm",
+          "conditional": false
+        },
+        {
+          "value": "intricate",
+          "conditional": false
+        },
+        {
+          "value": "multifaceted",
+          "conditional": false
+        },
+        {
+          "value": "paramount",
+          "conditional": false
+        },
+        {
+          "value": "pivotal",
+          "conditional": false
+        },
+        {
+          "value": "underscore",
+          "conditional": false
+        },
+        {
+          "value": "nuanced",
+          "conditional": false
+        },
+        {
+          "value": "robust",
+          "conditional": false
+        },
+        {
+          "value": "crucial",
+          "conditional": false
+        },
+        {
+          "value": "garner",
+          "conditional": false
+        },
+        {
+          "value": "holistic",
+          "conditional": false
+        },
+        {
+          "value": "interplay",
+          "conditional": false
+        },
+        {
+          "value": "showcase",
+          "conditional": false
+        },
+        {
+          "value": "testament",
+          "conditional": false
+        },
+        {
+          "value": "vibrant",
+          "conditional": false
+        },
+        {
+          "value": "enduring",
+          "conditional": false
+        },
+        {
+          "value": "groundbreaking",
+          "conditional": false
+        },
+        {
+          "value": "renowned",
+          "conditional": false
+        },
+        {
+          "value": "seamless",
+          "conditional": false
+        },
+        {
+          "value": "boast",
+          "conditional": false
+        }
+      ]
+    },
+    {
+      "id": "M04",
+      "source": "policy/language-standards.md :: 装饰性副词",
+      "requirement": "装饰性副词：列举词仅在无可验证信息、只强调时禁用，携带信息的副词可保留",
+      "scope": "all",
+      "check": "adverbs",
+      "manualRequired": true,
+      "exemptOriginal": true,
+      "terms": [
+        {
+          "value": "markedly",
+          "conditional": false
+        },
+        {
+          "value": "remarkably",
+          "conditional": false
+        },
+        {
+          "value": "strikingly",
+          "conditional": false
+        },
+        {
+          "value": "dramatically",
+          "conditional": false
+        },
+        {
+          "value": "profoundly",
+          "conditional": false
+        },
+        {
+          "value": "exceptionally",
+          "conditional": false
+        },
+        {
+          "value": "vastly",
+          "conditional": false
+        }
+      ]
+    },
+    {
+      "id": "M05",
+      "source": "policy/language-standards.md :: 装饰性副词",
+      "requirement": "删除副词后重新检查节奏与逻辑，不能机械裸删",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "M06",
+      "source": "policy/language-standards.md :: 中文禁语",
+      "requirement": "中文禁语：原规范全部列举项",
+      "scope": "all",
+      "check": "chinese-terms",
+      "manualRequired": false,
+      "exemptOriginal": true,
+      "terms": [
+        {
+          "value": "赋能",
+          "conditional": false
+        },
+        {
+          "value": "助力",
+          "conditional": false
+        },
+        {
+          "value": "深度剖析",
+          "conditional": false
+        },
+        {
+          "value": "深入浅出",
+          "conditional": false
+        },
+        {
+          "value": "值得一提",
+          "conditional": false
+        },
+        {
+          "value": "值得注意的是",
+          "conditional": false
+        },
+        {
+          "value": "不禁让人想到",
+          "conditional": false
+        },
+        {
+          "value": "从某种意义上来说",
+          "conditional": false
+        },
+        {
+          "value": "在某种程度上",
+          "conditional": false
+        },
+        {
+          "value": "毋庸置疑",
+          "conditional": false
+        }
+      ]
+    },
+    {
+      "id": "M07",
+      "source": "policy/language-standards.md :: 禁用句式",
+      "requirement": "禁用否定转肯定句式，直接表达主张",
+      "scope": "all",
+      "check": "contrast",
+      "manualRequired": true,
+      "exemptOriginal": true,
+      "terms": []
+    },
+    {
+      "id": "M08",
+      "source": "policy/language-standards.md :: 禁用句式",
+      "requirement": "无谓的防御性否定应删，确有必要的边界全文只说明一次，并正面定义实际讨论对象",
+      "scope": "all",
+      "check": "defensive",
+      "manualRequired": true,
+      "exemptOriginal": true,
+      "terms": [
+        {
+          "value": "this does not mean",
+          "conditional": false
+        },
+        {
+          "value": "it is not a claim that",
+          "conditional": false
+        },
+        {
+          "value": "this is not",
+          "conditional": false
+        }
+      ]
+    },
+    {
+      "id": "M09",
+      "source": "policy/language-standards.md :: 禁用句式",
+      "requirement": "冗余短语：按规范替换 in order to、due to the fact that、at the present time，删除两种 note 套话",
+      "scope": "all",
+      "check": "fillers",
+      "manualRequired": false,
+      "exemptOriginal": true,
+      "terms": [
+        {
+          "value": "in order to",
+          "conditional": false
+        },
+        {
+          "value": "due to the fact that",
+          "conditional": false
+        },
+        {
+          "value": "it is important to note that",
+          "conditional": false
+        },
+        {
+          "value": "it should be noted that",
+          "conditional": false
+        },
+        {
+          "value": "at the present time",
+          "conditional": false
+        }
+      ]
+    },
+    {
+      "id": "M10",
+      "source": "policy/language-standards.md :: 禁用句式",
+      "requirement": "宣布重要或显著却不说明原因的评价句应删，重要性需机制、后果、证据或对比支撑",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": true,
+      "terms": []
+    },
+    {
+      "id": "R01",
+      "source": "policy/language-standards.md :: 二、节奏",
+      "requirement": "节奏：先处理节奏，再处理词汇",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "R02",
+      "source": "policy/language-standards.md :: 二、节奏",
+      "requirement": "每段有明显短于、长于平均长度的句子",
+      "scope": "all",
+      "check": "rhythm-length",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "R03",
+      "source": "policy/language-standards.md :: 二、节奏",
+      "requirement": "连续三句同主语或同结构开头时至少重构一句",
+      "scope": "all",
+      "check": "rhythm-opening",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "R04",
+      "source": "policy/language-standards.md :: 二、节奏",
+      "requirement": "允许通过从句、连词、括号或同位语形成长句，禁止用分号，不用连续极短句制造断奏",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "R05",
+      "source": "policy/language-standards.md :: 二、节奏",
+      "requirement": "删除成分后保持段内连贯，不能拆成孤立句子",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "L01",
+      "source": "policy/language-standards.md :: 保护逻辑连接",
+      "requirement": "逻辑连接：保留承担真实关系的中英文连接词，删除后须以连接、回指或合句补回",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "L02",
+      "source": "policy/language-standards.md :: 校准对冲",
+      "requirement": "对冲：必要判断保留一到两个限定，受控直接结果可直说，观察性、探索性及不完整来源保留限定",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "L03",
+      "source": "policy/language-standards.md :: 术语一致",
+      "requirement": "同一概念术语一致，必要技术重复优于轮换同义词",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "L04",
+      "source": "policy/language-standards.md :: 具体压倒抽象",
+      "requirement": "研究性主张须有具体来源、对象、数字或观察，不能无来源概称研究证明",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "L05",
+      "source": "policy/language-standards.md :: 具体压倒抽象",
+      "requirement": "禁止不在同一尺度上的假范围",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "L06",
+      "source": "policy/language-standards.md :: 具体压倒抽象",
+      "requirement": "抽象关系要说明主体、机制与结果",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "L07",
+      "source": "policy/language-standards.md :: 具体压倒抽象",
+      "requirement": "重要判断只说一次，后续增加机制、证据、对比、限制或后果",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "L08",
+      "source": "policy/language-standards.md :: 具体压倒抽象",
+      "requirement": "空转系词优先简化，直接交代关系",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "V01",
+      "source": "policy/language-standards.md :: 学生文字",
+      "requirement": "Voice 来自作者与受众，学生须能解释并承担表达，不得过度抛光",
+      "scope": "student",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "V02",
+      "source": "policy/language-standards.md :: 学生文字",
+      "requirement": "允许结构诊断、追问、事实检查和教练反馈，工作稿不能冒充学生原创直接提交",
+      "scope": "student",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "V03",
+      "source": "policy/language-standards.md :: 学生文字",
+      "requirement": "顾问问题紧贴对应正文，点明已知人物、地点、动作或片段，缺事实列准确字段",
+      "scope": "advisor-comment",
+      "check": "editorial-slots",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": [
+        {
+          "value": "最近一次",
+          "conditional": false
+        },
+        {
+          "value": "哪一次",
+          "conditional": false
+        },
+        {
+          "value": "哪一段",
+          "conditional": false
+        },
+        {
+          "value": "一个具体",
+          "conditional": false
+        },
+        {
+          "value": "请给一个",
+          "conditional": false
+        },
+        {
+          "value": "什么时候",
+          "conditional": false
+        },
+        {
+          "value": "哪一年",
+          "conditional": false
+        },
+        {
+          "value": "哪一句",
+          "conditional": false
+        },
+        {
+          "value": "某个",
+          "conditional": false
+        },
+        {
+          "value": "某段",
+          "conditional": false
+        },
+        {
+          "value": "一个",
+          "conditional": false
+        },
+        {
+          "value": "一次",
+          "conditional": false
+        }
+      ]
+    },
+    {
+      "id": "V04",
+      "source": "policy/language-standards.md :: 学生文字",
+      "requirement": "顾问空槽规则仅作用于顾问或 Agent 新写问题和批注，不机械修改学生原文",
+      "scope": "advisor-comment",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "V05",
+      "source": "policy/language-standards.md :: 学生文书的编辑边界",
+      "requirement": "默认 edit，修语法、搭配、指代、重复、必要连接和局部顺序，保留事件顺序、判断、句长与可承担的不完美",
+      "scope": "student",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "V06",
+      "source": "policy/language-standards.md :: 学生文书的编辑边界",
+      "requirement": "edit 不新增场景、动机、主题、因果或结尾含义，不替换成通用申请论点",
+      "scope": "student",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "V07",
+      "source": "policy/language-standards.md :: 学生文书的编辑边界",
+      "requirement": "能局部改则不整段重写，保留有辨识度的长句、直接判断、具体但略笨拙的说法，正确与成熟不足以证明改进",
+      "scope": "student",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "V08",
+      "source": "policy/language-standards.md :: 学生文书的编辑边界",
+      "requirement": "主线、段落功能、主要解释或收束意义变化属于 revision，须用户明确要求并继续满足事实边界",
+      "scope": "student",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "N01",
+      "source": "policy/language-standards.md :: 个人文书：叙述不能被解释性注释替代",
+      "requirement": "以段落功能判断，专业动机可解释选择，未来学习可直接写计划，直述题不强行场景化",
+      "scope": "student",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "N02",
+      "source": "policy/language-standards.md :: 个人文书：叙述不能被解释性注释替代",
+      "requirement": "空泛主句外挂抽象 where / which / whose 意义，不能替代经历的开头与推进",
+      "scope": "english-narrative",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "N03",
+      "source": "policy/language-standards.md :: 个人文书：叙述不能被解释性注释替代",
+      "requirement": "活动转兴趣框架若无具体缘由，应删或改为有来源的行动、选择与后果，换近义词无效",
+      "scope": "english-narrative",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "N04",
+      "source": "policy/language-standards.md :: 个人文书：叙述不能被解释性注释替代",
+      "requirement": "认知动词加并列抽象问句，不能包装宽泛兴趣，需要真实问题及其对下一步的影响",
+      "scope": "english-narrative",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "N05",
+      "source": "policy/language-standards.md :: 个人文书：叙述不能被解释性注释替代",
+      "requirement": "认知改变须有之前判断、触发证据或后续选择的来源，缺少时降低或删除声明",
+      "scope": "english-narrative",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "N06",
+      "source": "policy/language-standards.md :: 个人文书：叙述不能被解释性注释替代",
+      "requirement": "教材式定义仅保留读懂实际问题所需部分，并与经历相连",
+      "scope": "english-narrative",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "N07",
+      "source": "policy/language-standards.md :: 个人文书：叙述不能被解释性注释替代",
+      "requirement": "保留辨明人物、对象、时间和因果的从句，follow / introduce / understand 本身不禁用，不强制碎句、改主语或感官堆砌",
+      "scope": "english-narrative",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "N08",
+      "source": "policy/language-standards.md :: 个人文书：叙述不能被解释性注释替代",
+      "requirement": "遮住解释尾部再读主干用于诊断，事件、问题、后续行动不能成为每段填写模板，动作、对话、心理与结果仍须来源",
+      "scope": "english-narrative",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "E01",
+      "source": "policy/language-standards.md :: 叙事性文书的结尾",
+      "requirement": "叙事结尾默认留在时间线，动作、结果或画面完成中心冲突后及时停，不追加能力说明",
+      "scope": "narrative",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "E02",
+      "source": "policy/language-standards.md :: 叙事性文书的结尾",
+      "requirement": "结尾禁三个及以上同类短语、动名词或同构句清点行动、品质、成长或意义，包括冒号列表和连续自我说明",
+      "scope": "narrative",
+      "check": "narrative-ending",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "E03",
+      "source": "policy/language-standards.md :: 叙事性文书的结尾",
+      "requirement": "总结或展望须增加新的具体后果、选择或正文未有认识，通常只用一句，删重复主题与能力标签",
+      "scope": "narrative",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "E04",
+      "source": "policy/language-standards.md :: 叙事性文书的结尾",
+      "requirement": "允许最后动作、直接后果、获得新含义的物件或场景、克制判断及留白，回扣之后不再解释",
+      "scope": "narrative",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "E05",
+      "source": "policy/language-standards.md :: 叙事性文书的结尾",
+      "requirement": "人工逐句检查最后两段是否完成事件、增加后果或改变理解，复述、清点、展示申请者应处理",
+      "scope": "narrative",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "A01",
+      "source": "policy/language-standards.md :: 顾问与管理材料",
+      "requirement": "顾问与管理材料先事实判断后行动，重要结论附来源、时间、版本或验证状态，不用气势或完整表格制造确定性，密度符合受众",
+      "scope": "advisor",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "O01",
+      "source": "policy/language-standards.md :: 对外材料",
+      "requirement": "对外作者、机构和事实责任明确，未核验内容限定或待确认，正式承诺、学生事实与发布由人最终确认",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "Q01",
+      "source": "policy/language-standards.md :: 五、交付前检查",
+      "requirement": "交付前九项人工检查全部执行，当前部分 lint 不能宣称全面通过，后续自动检查也不能替代逻辑、证据与 voice 人审",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "C01",
+      "source": "policy/collaboration-writing.md :: 文书辅导：早期草稿",
+      "requirement": "早期草稿先帮助补齐关键细节、困难和转折，先找主线，再定位具体缺口，因果链只是分析视角",
+      "scope": "material",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "C02",
+      "source": "policy/collaboration-writing.md :: 文书辅导：微信反馈",
+      "requirement": "早期微信反馈每篇只列两到三个最重要问题",
+      "scope": "early-wechat-feedback",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "C03",
+      "source": "policy/collaboration-writing.md :: 文书辅导：完整 Clean Draft 交付",
+      "requirement": "明确要求完整 clean draft 时，默认最高词数减 20 到最高词数，素材不足不能凑字，文件只含完整题目和正文，阶段规则适当切换",
+      "scope": "clean-draft",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    },
+    {
+      "id": "C04",
+      "source": "policy/collaboration-writing.md :: 使用顺序",
+      "requirement": "当前任务与适用范围优先，单次反馈保持候选，确认后才长期复用，原文与私密反馈不进 Git",
+      "scope": "all",
+      "check": "manual",
+      "manualRequired": true,
+      "exemptOriginal": false,
+      "terms": []
+    }
+  ]
+}

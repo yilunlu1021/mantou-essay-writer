@@ -1,0 +1,14 @@
+{
+  "version": "0.1.0-preview.1",
+  "directories": [
+    "bin",
+    "policy",
+    "packages/text-quality",
+    "packages/essay-writer",
+    "scripts",
+    "test",
+    ".github"
+  ],
+  "sourceHistory": "new standalone repository",
+  "policyGroups": 55
+}

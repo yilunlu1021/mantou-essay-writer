@@ -1,0 +1,31 @@
+name: Release checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: [22, 24]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.14.0
+      - name: Clean source install
+        run: pnpm install --frozen-lockfile
+      - name: Test the committed release bundle
+        run: node --test test/release.test.mjs
+      - name: Build and test source
+        run: pnpm check
+      - name: Verify reproducible bundle and policy
+        run: git diff --exit-code -- bin policy THIRD_PARTY_NOTICES.txt
