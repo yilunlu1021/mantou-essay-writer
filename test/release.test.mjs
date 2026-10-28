@@ -19,6 +19,13 @@ test('release ZIP: Node-only first use, Chinese paths, DOCX, BOM patch and rejec
   assert.ok(JSON.parse(run(unpack,['schema']).stdout).patch);assert.ok(JSON.parse(run(unpack,['example']).stdout).patchExample);
   const demo=JSON.parse(run(unpack,['demo','--out','演示 case']).stdout);assert.equal(demo.version,'v0001');assert.equal(demo.deliveryAuthorized,false);
   assert.equal(JSON.parse(run(unpack,['status','--session','演示 case'],3).stdout).qualityDecision,'needs-review');
+  const workflow=JSON.parse(run(unpack,['prepare-workflow','--session','演示 case']).stdout);
+  assert.ok(workflow.ruleReview.cards.length>100);assert.equal(workflow.deliveryAuthorized,false);
+  await writeFile(join(unpack,'workflow.json'),JSON.stringify(workflow.template));
+  const pending=JSON.parse(run(unpack,['check-workflow','--session','演示 case','--review-file','workflow.json'],3).stdout);
+  assert.equal(pending.workflowStatus,'needs-review');assert.equal(pending.recordsComplete,false);
+  await writeFile(join(unpack,'rules.json'),JSON.stringify(workflow.ruleReview.template));
+  assert.equal(JSON.parse(run(unpack,['review-rules','--session','演示 case','--review-file','rules.json'],3).stdout).reviewDecision,'needs-review');
   run(unpack,['import','--input','演示 case/versions/v0001/working-draft.docx','--out','word roundtrip','--language','en','--genre','academic'],3);
   const policyPath=join(unpack,'policy/language-standards.md');await writeFile(policyPath,(await readFile(policyPath,'utf8')).replaceAll('\n','\r\n'));run(unpack,['doctor']);
   await writeFile(join(unpack,'draft.txt'),'\uFEFFi tested the wheel.\r\n\r\nThe cart rolled.');

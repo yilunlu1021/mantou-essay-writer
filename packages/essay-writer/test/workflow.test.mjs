@@ -10,6 +10,34 @@ import {importSession,loadSession,patchTemplate,reviseSession,sessionStatus,reco
 const policyRoot=resolve('.');
 const context=contextSchema.parse({language:'mixed',genre:'general',authorRole:'student',audience:'reader'});
 const fixture=async(t,text='原文😀; we tested it.\r\n\r\nA cart rolled.')=>{const dir=await mkdtemp(join(tmpdir(),'essay 单元 '));t.after(()=>rm(dir,{recursive:true,force:true}));const input=join(dir,'输入 file.txt');await writeFile(input,'\uFEFF'+text);return {dir,input,out:join(dir,'my session')};};
+test('complete SDK drafts bind max minus 15 and enforce both boundaries',async t=>{
+  for(const count of [634,635,650,651]){
+    const f=await fixture(t,Array(count).fill('plain').join(' '));
+    const result=await importSession(policyRoot,{...f,context:contextSchema.parse({...context,language:'en',stage:'clean-draft',length:{unit:'english-words',min:1,max:650}})});
+    assert.equal((await loadSession(policyRoot,f.out)).manifest.context.length.min,635);
+    assert.equal(result.qualityDecision==='blocked',count===634||count===651);
+  }
+});
+test('complete SDK drafts preserve stricter minima and support other counting units',async t=>{
+  const stricter=await fixture(t,Array(640).fill('plain').join(' '));
+  const result=await importSession(policyRoot,{...stricter,context:contextSchema.parse({...context,language:'en',stage:'clean-draft',length:{unit:'english-words',min:645,max:650}})});
+  assert.equal((await loadSession(policyRoot,stricter.out)).manifest.context.length.min,645);
+  assert.equal(result.qualityDecision,'blocked');
+  for(const unit of ['han-characters','non-whitespace-codepoints']){
+    const f=await fixture(t,'学'.repeat(635));
+    const accepted=await importSession(policyRoot,{...f,context:contextSchema.parse({...context,language:'zh',stage:'clean-draft',length:{unit,max:650}})});
+    assert.equal((await loadSession(policyRoot,f.out)).manifest.context.length.min,635);
+    assert.notEqual(accepted.qualityDecision,'blocked');
+  }
+});
+test('complete SDK drafts require a maximum while internal working drafts keep their original range',async t=>{
+  const missing=await fixture(t,'The wheel moved.');
+  await assert.rejects(importSession(policyRoot,{...missing,context:contextSchema.parse({...context,stage:'clean-draft'})}),{code:'length-required'});
+  const internal=await fixture(t,'The wheel moved.');
+  const result=await importSession(policyRoot,{...internal,context:contextSchema.parse({...context,stage:'working',length:{unit:'english-words',max:650}})});
+  assert.equal((await loadSession(policyRoot,internal.out)).manifest.context.length.min,undefined);
+  assert.notEqual(result.qualityDecision,'blocked');
+});
 async function patch(out){const s=await loadSession(policyRoot,out);return {...patchTemplate(s.manifest.context,s.document,s.policy),patches:[{blockId:'p1',start:3,end:4,expectedText:';',replacement:'.',reason:'Preserve the sentence and change punctuation.'}]};}
 test('BOM source bytes, Unicode patch, immutable versions and stale rejection',async t=>{const f=await fixture(t);await importSession(policyRoot,{...f,context});assert.deepEqual(await readFile(f.input),await readFile(join(f.out,'original.bin')));const p=await patch(f.out);await reviseSession(policyRoot,f.out,p);const s=await loadSession(policyRoot,f.out);assert.equal(s.document.blocks[0].text,'原文😀. we tested it.');assert.equal(s.original.blocks[0].text,'原文😀; we tested it.');await assert.rejects(reviseSession(policyRoot,f.out,p),e=>e.code==='patch-rejected'&&e.hint.includes('stale-document'));assert.equal((await sessionStatus(policyRoot,f.out)).deliveryAuthorized,false);});
 test('protected blocks, budgets, overlap and source checks',async t=>{const f=await fixture(t);await importSession(policyRoot,{...f,context,protectedBlocks:['p1']});await assert.rejects(reviseSession(policyRoot,f.out,await patch(f.out)),{code:'protected-block'});const f2=await fixture(t);await importSession(policyRoot,{...f2,context,maxChangedCodepoints:1});await assert.rejects(reviseSession(policyRoot,f2.out,await patch(f2.out)),e=>e.hint==='edit-budget-exceeded');const f3=await fixture(t);await importSession(policyRoot,{...f3,context});const p=await patch(f3.out);await assert.rejects(reviseSession(policyRoot,f3.out,{...p,patches:[...p.patches,...p.patches]}),e=>e.hint.includes('overlapping-patches'));});

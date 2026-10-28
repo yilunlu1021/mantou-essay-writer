@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0-preview.1
+
+- Add executable rule cards, per-unit evidence and detail checks, and full ordered grammar candidate inventories for English and mixed-language application drafts.
+- Add prepare-workflow/check-workflow to revalidate six raw review records and mechanical error totals for the current version. Missing, stale or explicitly failed checks cannot become ready for human review.
+- Preserve policy 1.21, originals and historical reviews. Grammar categories and atomic obligation coverage remain reviewer judgments, and complete records never authorize submission.
+- Add synthetic boundary regressions and a coding-agent workflow guide. Actual cross-model compliance and prose quality remain unmeasured.
+
 ## 0.1.0-preview.1
 
 - Bundled local CLI and SDK, with all 55 language policy groups and source documents.

@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0-preview.1",
+  "version": "0.2.0-preview.1",
   "directories": [
     "bin",
     "policy",
@@ -7,8 +7,12 @@
     "packages/essay-writer",
     "scripts",
     "test",
-    ".github"
+    ".github",
+    "docs/benchmarks"
   ],
-  "sourceHistory": "new standalone repository",
+  "excludedHistoricalSources": [
+    "packages/essay-writer/src/common-app-protocol-data.ts"
+  ],
+  "sourceHistory": "standalone public history only",
   "policyGroups": 55
 }

@@ -1,0 +1,144 @@
+{
+  "schemaVersion": "1.0.0",
+  "origin": "independently-authored-synthetic-calibration",
+  "scope": "Short excerpts for qualitative rater calibration, not complete application drafts or actual student samples.",
+  "claims": {
+    "realStudentData": false,
+    "actualDetectorResults": false,
+    "preferenceFitEstablished": false,
+    "admissionPrediction": false,
+    "numericLevelCalibrationEstablished": false
+  },
+  "cases": [
+    {
+      "id": "plain-technical-versus-invented-mind",
+      "essayType": "common-app",
+      "prompt": "Describe a task that mattered to you and what you did.",
+      "sourceFacts": ["The author tested three labels on sample jars.", "Paper labels smeared after washing.", "The author replaced paper with tape.", "No mentor reaction was supplied."],
+      "variantA": "I tested three labels. The paper one smeared when I washed the jar, so I switched to tape.",
+      "variantB": "I could see my mentor's disappointment turn to pride as I replaced the smeared paper label with tape. She finally understood that I had become a careful scientist.",
+      "expectedDirection": "A-preferred",
+      "priorities": ["source-fidelity", "evidence-scope", "language-information"],
+      "reason": "A is technically plain and supported. B invents another person's thoughts and a broad professional judgment; polish cannot remove that source issue.",
+      "retainCounterexample": "Three ordinary subject-verb sentences can record a test, an observed failure and a justified change."
+    },
+    {
+      "id": "sequence-versus-false-cause",
+      "essayType": "common-app",
+      "prompt": "Explain a correction you made.",
+      "sourceFacts": ["A delivery cart arrived during the afternoon.", "Later the author used existing notes to correct a denominator.", "No relationship between the cart and the mathematical correction was supplied."],
+      "variantA": "The delivery cart arrived that afternoon. Later, I used my notes to correct the denominator.",
+      "variantB": "Because the delivery cart arrived that afternoon, I used my notes to correct the denominator.",
+      "expectedDirection": "A-preferred",
+      "priorities": ["relationships", "source-fidelity"],
+      "reason": "B turns chronological proximity into an unsupported cause. A may still contain removable background, but it does not manufacture the relationship.",
+      "retainCounterexample": "A temporal connector can be necessary; replacing it with a stronger causal connector is not automatically an improvement."
+    },
+    {
+      "id": "one-resource-versus-generic-list",
+      "essayType": "why-school",
+      "prompt": "Explain which academic opportunity you would use and why.",
+      "sourceFacts": ["The author's soil probe lost a week of readings.", "The fictional institution's synthetic catalog describes a field instrumentation course with calibration exercises.", "No real institution, current course or official website is represented by this fixture."],
+      "variantA": "My soil probe lost a week of readings. The field instrumentation course's calibration exercises would help me diagnose the failure and test another logger before leaving it outside.",
+      "variantB": "I want to take field instrumentation, applied statistics, engineering design and environmental systems. Each would improve my knowledge and prepare me for future challenges.",
+      "expectedDirection": "A-preferred",
+      "priorities": ["genre-task", "relationships", "information-gain"],
+      "reason": "A connects one declared resource to a specific existing problem and a plausible use. B repeats a generic benefit across a list; resource count is not evidence of fit.",
+      "retainCounterexample": "A list can be appropriate when the prompt asks for a list; every resource does not need an identical background-gap-resource-output paragraph."
+    },
+    {
+      "id": "direct-short-answer-versus-growth-padding",
+      "essayType": "supplement",
+      "task": "Describe your responsibilities in no more than 60 words.",
+      "prompt": "What were your responsibilities at the repair station?",
+      "sourceFacts": ["The author checked donated bicycle tires.", "The author recorded usable parts and ordered tubes.", "No emotional turning point was supplied."],
+      "variantA": "I checked donated bicycles for worn tires, recorded reusable parts and ordered replacement tubes.",
+      "variantB": "As I stood before the bicycles, I discovered that responsibility meant seeing possibilities in ordinary objects. I checked tires, recorded parts and ordered tubes, learning a lesson I would carry into every part of my life.",
+      "expectedDirection": "A-preferred",
+      "priorities": ["prompt-response", "genre-task", "economy"],
+      "reason": "The requested information is responsibility. A answers directly; B spends the small space on an unsupported, generic life lesson.",
+      "retainCounterexample": "A short answer need not contain a dramatic scene, personal transformation or an echoed opening."
+    },
+    {
+      "id": "strong-source-judgment-versus-added-balance",
+      "essayType": "common-app",
+      "prompt": "Describe a decision you questioned.",
+      "sourceFacts": ["The original author wrote that the sign made her furious.", "The sign excluded volunteers who could not attend every week.", "She asked the coordinator to change the rule.", "The original author did not express sympathy with the coordinator's workload."],
+      "variantA": "That sign made me furious. It excluded volunteers who could not attend every week, so I asked the coordinator to change the rule.",
+      "variantB": "Although I appreciated the coordinator's difficult workload, I felt a modest concern about the sign. I respectfully suggested a more balanced approach to participation.",
+      "expectedDirection": "A-preferred",
+      "priorities": ["voice", "source-fidelity", "relationships"],
+      "reason": "B adds an unreported sympathetic view and weakens the original judgment. A retains the author's force and gives the decision an actual reason.",
+      "retainCounterexample": "A strong personal judgment is not automatically immature. It still needs to serve the prompt and avoid unsupported claims."
+    },
+    {
+      "id": "necessary-wh-versus-nominal-rephrasing",
+      "essayType": "why-major",
+      "prompt": "Describe an academic question you pursued.",
+      "sourceFacts": ["The author asked about the storage temperature of each sample before comparing results.", "The author specifically asked which samples had been refrigerated.", "Temperature could affect the measured result."],
+      "variantA": "I asked which samples had been refrigerated because temperature could affect the result.",
+      "variantB": "Before comparing the results, I asked about the storage temperature of each sample.",
+      "expectedDirection": "no-syntax-based-preference",
+      "priorities": ["language-information", "relationships"],
+      "reason": "Both forms can communicate a genuine, supported question. A makes the reason explicit; B can work when that reason is already established. A wh clause is not itself a flaw.",
+      "retainCounterexample": "Different syntax does not establish different quality. Judge the surrounding information and what deletion would lose."
+    },
+    {
+      "id": "ordinary-actions-versus-varied-repetition",
+      "essayType": "supplement",
+      "task": "Explain your process for checking the register.",
+      "prompt": "How did you check the register?",
+      "sourceFacts": ["The author counted the returned tools.", "The author compared that count with the register.", "The author called the two borrowers whose tools were missing."],
+      "variantA": "I counted the tools. I compared the count with the register. I called the two borrowers whose tools were missing.",
+      "variantB": "I checked the register with care. Careful checking of the register was my approach, which meant giving the register a thorough review.",
+      "expectedDirection": "A-preferred",
+      "priorities": ["information-gain", "genre-task", "cadence"],
+      "reason": "A uses repeated subjects to perform three different actions. B varies syntax while repeating one vague function and omitting the actual process.",
+      "retainCounterexample": "Three consecutive first-person statements are permissible when each adds a necessary action."
+    },
+    {
+      "id": "earned-stop-versus-summary-inventory",
+      "essayType": "common-app",
+      "prompt": "Describe how you handled a practical difficulty.",
+      "sourceFacts": ["The replacement latch finally held.", "The author shut the cabinet and returned the borrowed screwdriver.", "No further outcome was supplied."],
+      "variantA": "The latch held. I shut the cabinet and returned the screwdriver.",
+      "variantB": "The latch held. I shut the cabinet and returned the screwdriver. I had learned patience, developed resilience and discovered the value of practical work. I now bring that approach to every challenge.",
+      "expectedDirection": "A-preferred",
+      "priorities": ["closure", "information-gain", "evidence-scope"],
+      "reason": "The concrete result closes the practical problem. B adds a three-part quality inventory and a universal claim without new evidence.",
+      "retainCounterexample": "A concluding judgment or future step can remain when it adds supported information the preceding scene does not already supply."
+    },
+    {
+      "id": "major-question-versus-field-praise",
+      "essayType": "why-major",
+      "prompt": "Why do you want to study materials science?",
+      "sourceFacts": ["The author tested starch films at two humidity levels.", "The films cracked after drying.", "She has not identified which factor caused the cracking.", "She wants to study polymer behavior."],
+      "variantA": "My starch films cracked after drying at both humidity levels, and the cause remains unclear. Polymer behavior is the focus of my planned studies.",
+      "variantB": "Materials science combines creativity with rigorous thinking and offers the chance to solve important problems. Its many applications would help me make a difference in the world.",
+      "expectedDirection": "A-preferred",
+      "priorities": ["genre-task", "relationships", "evidence-scope"],
+      "reason": "A supplies an actual unresolved question and a credible learning reason. B praises the field without explaining this author's interest. A need not claim a discovery or personal transformation.",
+      "retainCounterexample": "Direct plans and unresolved academic questions can be the center of a Why Major answer."
+    },
+    {
+      "id": "bounded-feeling-versus-group-overreach",
+      "essayType": "supplement",
+      "task": "Describe what participating meant to you.",
+      "prompt": "What did the workshop mean to you?",
+      "sourceFacts": ["The author attended a workshop and felt less hesitant about asking questions.", "Two other participants asked questions afterward.", "No survey, long-term follow-up or knowledge of everyone's experience was supplied."],
+      "variantA": "I felt less hesitant about asking questions after the workshop. Two other participants asked questions afterward.",
+      "variantB": "The workshop gave everyone confidence and permanently changed how our whole community approached learning.",
+      "expectedDirection": "A-preferred",
+      "priorities": ["evidence-scope", "source-fidelity", "voice"],
+      "reason": "A separates a personal feeling from two observed actions. B converts limited observations into a universal and permanent outcome.",
+      "retainCounterexample": "A personal feeling can be stated directly without a survey; that does not license claims about every participant."
+    }
+  ],
+  "raterInstructions": [
+    "Read the prompt and source declarations before judging the excerpts. These are synthetic fixtures, not verified external facts.",
+    "Record your own preferred direction and relevant dimensions before viewing the expected direction.",
+    "Explain disagreement rather than averaging away a source, authorization or relationship problem.",
+    "Use the grammar counterexamples as protection against over-editing, not as automatic high-score rules.",
+    "These cases do not establish numeric grading thresholds, actual advisor agreement, detector improvement or cross-student generalization."
+  ]
+}

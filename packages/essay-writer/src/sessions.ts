@@ -51,6 +51,11 @@ async function writeVersion(folder:string, number:number, parentHash:string, roo
 }
 export async function importSession(policyRoot:string, options:ImportOptions){
   const policy=await loadPolicy(policyRoot); const context=contextSchema.parse(options.context);
+  if(context.stage==='clean-draft'){
+    const length=context.length;
+    if(!length||length.max===undefined)fail('length-required','Provide the verified official maximum and counting unit for a complete draft.');
+    context.length={...length,min:Math.max(length.min??0,Math.max(0,length.max-15))};
+  }
   if(context.mode==='revision'&&!context.revisionAuthorized)fail('revision-authorization-required','Use edit mode or explicitly authorize structural revision.');
   if(!isPortableFilename(basename(resolve(options.out))))fail('output-name','Choose a folder name valid on Windows and macOS.');
   const extension=extname(options.input).toLowerCase(); if(!['.txt','.md','.docx'].includes(extension))fail('input-format','Choose a UTF-8 .txt/.md or paragraph-only .docx file.');

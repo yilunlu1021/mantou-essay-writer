@@ -4,6 +4,14 @@ import {
 } from "./contracts.js";
 import { hashValue, countText, measureDocument, sentences, codepointOffset } from "./text.js";
 
+// Constrain the gap to auxiliaries and adverbs so another subject's desire is not matched.
+const firstPersonModifier = "(?:(?:am|are|was|were|have|had|been|being|be|do|did|would|should|could|might|must|need)(?:n['’]t)?(?:['’]ve)?|will|shall|can|may|can['’]t|won['’]t|shan['’]t|ain['’]t|cannot|not|never|ever|always|just|even|also|very|much|so|quite|rather|once|yet|then|now|perhaps|already|often|sometimes|almost|seldom|long|most|too|no\\s+longer|used\\s+to|at\\s+first|in\\s+fact|for\\s+one|more\\s+than\\s+anything|[a-z]+ly)";
+function firstPersonFrame(target: "still" | "want") {
+  const modifier = target === "want" ? "(?:" + firstPersonModifier + "|still)" : firstPersonModifier;
+  return new RegExp("\\bI(?:['’](?:m|ve|(?:d|ll)(?:['’]ve)?))?(?:[\\s,()]+" + modifier + "\\b)*[\\s,()]+" +
+    (target === "want" ? "want(?:s|ed|ing)?" : "still") + "\\b", "gi");
+}
+
 export interface AuditOptions {
   // Host-owned verifier. Never populated from a document's own approval claims.
   verifyOriginalBlock?: (block: Readonly<TextBlock>) => boolean;
@@ -165,6 +173,11 @@ function runCheck(rule: Rule, blocks: TextBlock[], input: AuditInput, add: (f: F
               rule.manualRequired ? "检查本处是否空泛或承担真实限定，不能只删除词语。" : "按规范处理本处表达并保护相邻逻辑。");
         }
         break;
+      case "sentence-patterns":
+        scan(block, firstPersonFrame("still"), "banned-i-still", "error", "禁用 I still 及其助动词、副词变体，按来源具体表达当前状态或未解决的问题。");
+        scan(block, firstPersonFrame("want"), "banned-i-want", "error", "禁用 I want / I wanted 及其时态、否定、缩写和副词变体。保留动机原意，不机械换模板或补造行动。");
+        // The legacy contrast check retains its historical behavior for older policy bundles.
+        // falls through
       case "contrast":
         scan(block, /\bnot\b[^.!?;\n]{0,100}\bbut\b/gi, "not-x-but-y", "error", "直接表达实际主张。");
         scan(block, /不是[^。！？\n]{0,100}?而是/g, "not-x-but-y-zh", "error", "直接表达实际主张。");

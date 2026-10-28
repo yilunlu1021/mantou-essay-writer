@@ -19,6 +19,9 @@ artifacts/
 /draft.*
 /prompt.txt
 /edits*.json
+/rules.json
+/workflow.json
+/*-review.json
 *.docx
 *.doc
 *.pdf
