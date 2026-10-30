@@ -55,7 +55,11 @@ export class Pipeline {
     }catch(e){if(e.notSent){this.store.finishUnsentCall(callId);recorded=true;}throw e;}finally{if(!recorded)this.store.finishCall(callId,null);}
   }
   async validated(job,phase,payload,schema,validate){let error;for(let attempt=0;attempt<2;attempt++){
-    const value=await this.ask(job,phase,{...payload,...(error?{previousValidationErrors:error,instruction:'仅修正记录缺项、格式或精确引用。不要把真实失败改成通过。'}:{})},schema);
+    let value;try{value=await this.ask(job,phase,{...payload,...(error?{previousValidationErrors:error,instruction:'仅修正记录缺项、格式或精确引用。不要把真实失败改成通过。'}:{})},schema);}catch(e){
+      // Retry only an explicitly finished format failure. Uncertain transport stops; missing numeric usage stays reserved.
+      if(attempt===1||!['model-invalid-json','model-empty-response'].includes(e.code??e.message))throw e;
+      error=details(e);continue;
+    }
     try{return await validate(value);}catch(e){error=details(e);await writeFile(join(job.folder,`invalid-${phase}-${Date.now()}-${attempt}.json`),JSON.stringify({value,error},null,2),{mode:0o600});if(attempt===1)throw e;}
   }}
   async draft(job,sessionPath,diagnosis,repair){

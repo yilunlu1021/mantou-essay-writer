@@ -25258,7 +25258,14 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
   async validated(job, phase, payload, schema, validate2) {
     let error51;
     for (let attempt = 0; attempt < 2; attempt++) {
-      const value2 = await this.ask(job, phase, { ...payload, ...error51 ? { previousValidationErrors: error51, instruction: "\u4EC5\u4FEE\u6B63\u8BB0\u5F55\u7F3A\u9879\u3001\u683C\u5F0F\u6216\u7CBE\u786E\u5F15\u7528\u3002\u4E0D\u8981\u628A\u771F\u5B9E\u5931\u8D25\u6539\u6210\u901A\u8FC7\u3002" } : {} }, schema);
+      let value2;
+      try {
+        value2 = await this.ask(job, phase, { ...payload, ...error51 ? { previousValidationErrors: error51, instruction: "\u4EC5\u4FEE\u6B63\u8BB0\u5F55\u7F3A\u9879\u3001\u683C\u5F0F\u6216\u7CBE\u786E\u5F15\u7528\u3002\u4E0D\u8981\u628A\u771F\u5B9E\u5931\u8D25\u6539\u6210\u901A\u8FC7\u3002" } : {} }, schema);
+      } catch (e) {
+        if (attempt === 1 || !["model-invalid-json", "model-empty-response"].includes(e.code ?? e.message)) throw e;
+        error51 = details(e);
+        continue;
+      }
       try {
         return await validate2(value2);
       } catch (e) {

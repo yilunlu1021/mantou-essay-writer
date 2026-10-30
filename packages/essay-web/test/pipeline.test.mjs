@@ -6,6 +6,7 @@ import{join,resolve}from'node:path';
 import{randomUUID}from'node:crypto';
 import{Store}from'../src/store.mjs';
 import{Pipeline,repairFindings}from'../src/pipeline.mjs';
+import{callModel}from'../src/providers.mjs';
 // Entirely synthetic declarations. This checks seven real SDK contracts, never actual model prose quality.
 function syntheticRecord(user){
  if(user.phase==='diagnose')return{promptQuote:'',genre:'academic',centralAnswer:'The door is blue.',concerns:[],instructionConflicts:[],missingFacts:[]};
@@ -70,4 +71,16 @@ test('a known answer failure is repaired even when another review is unavailable
 test('repair feedback preserves prohibited grammar judgments and attaches the exact current locator',()=>{
  const span={blockId:'p1',start:0,end:10,quote:'A test cue'},raw={rules:{grammar:{sentences:[{id:'s1',relativeClause:'prohibited',mentalFrame:'clear',reason:'A relative clause needs repair.'}],ing:[{id:'ing1',classification:'prohibited',reason:'A gerund is forbidden.'}]},checks:[{checkId:'x',status:'PASS',reason:'Keep this choice.'}]},discourse:{transitions:[{from:span,to:span,connection:'missing',decision:'retain',reason:'The link lacks support.'}]},style:{patterns:[{assessment:'retain',reason:'issue',anchor:{...span,quote:'meaning'}}]}},before=JSON.stringify(raw);
  const findings=repairFindings(raw,{sentences:[{id:'s1',span}],ing:[{id:'ing1',span}]});assert.equal(JSON.stringify(raw),before);assert.equal(findings.length,3);assert.equal(findings[0].entry.relativeClause,'prohibited');assert.deepEqual(findings[0].locator.span,span);assert.equal(findings[1].entry.classification,'prohibited');assert.equal(findings[2].entry.connection,'missing');assert.deepEqual(findings[2].entry.from,span);assert.deepEqual(findings[2].context.to,span);
+});
+test('finished invalid JSON retries once with both usages recorded; uncertain timeouts never retry',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'essay-format-retry-')),store=new Store(dir,{bootstrapPassword:'synthetic-only-password'});t.after(async()=>{store.close();await rm(dir,{recursive:true,force:true});});store.setProvider('glm','synthetic-only-standard-api-key');const user=store.login('admin','synthetic-only-password').user;
+ async function scenario(mode){const id=store.createJob(user.id,{requestId:randomUUID(),text:'Synthetic.',prompt:'Describe it.',instructions:'Keep source.',mode:'review'},'glm');store.updateJob(id,'running','test');let calls=0,sawError=false;
+  const pipeline=new Pipeline({store,policyRoot:resolve('../essay-writer'),dataRoot:dir,modelCall:args=>callModel({...args,fetchImpl:async()=>{calls++;sawError||=args.user.previousValidationErrors?.message==='model-invalid-json';if(mode==='timeout'){const error=new Error('synthetic timeout');error.name='TimeoutError';throw error;}return new Response(JSON.stringify({model:'SYNTHETIC-NO-NETWORK',usage:{prompt_tokens:10,completion_tokens:20},choices:[{finish_reason:'stop',message:{content:mode==='always-invalid'||calls===1?'{broken':'{"ok":true}'}}]}));}})});
+  const promise=pipeline.validated(store.internalJob(id),'source',{}, {type:'object'},v=>v);
+  if(mode==='recovers')assert.deepEqual(await promise,{ok:true});else await assert.rejects(promise,mode==='timeout'?/provider-timeout/:/model-invalid-json/);
+  return{calls,sawError,job:store.internalJob(id),records:store.callsFor(id)};
+ }
+ const recovered=await scenario('recovers');assert.equal(recovered.calls,2);assert.equal(recovered.sawError,true);assert.equal(recovered.job.unknown_usage,0);assert.equal(recovered.records.length,2);assert.ok(recovered.records.every(r=>r.state==='recorded'));assert.equal(recovered.job.cost,0.000128);
+ const invalid=await scenario('always-invalid');assert.equal(invalid.calls,2);assert.equal(invalid.records.length,2);assert.equal(invalid.job.unknown_usage,0);
+ const uncertain=await scenario('timeout');assert.equal(uncertain.calls,1);assert.equal(uncertain.job.unknown_usage,1);assert.equal(uncertain.records[0].state,'usage-unknown');
 });
