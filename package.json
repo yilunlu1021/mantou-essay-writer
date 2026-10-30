@@ -1,14 +1,30 @@
 {
-  "name":"mantou-essay-writer","version":"0.3.0-preview.1","private":true,"type":"module","license":"MIT",
-  "description":"Local policy-guided writing review and versioned editing for your existing agent",
-  "engines":{"node":">=22 <25"},"packageManager":"pnpm@10.14.0",
-  "exports":{".":"./bin/sdk.mjs"},"bin":{"mantou-essay":"./bin/essay.mjs"},
-  "scripts":{
-    "build":"pnpm --filter @mantou/text-quality build && pnpm --filter @mantou/essay-writer build && node scripts/build.mjs",
-    "test":"pnpm --filter @mantou/essay-writer test && node --test test/release.test.mjs",
-    "check":"pnpm build && pnpm test",
-    "demo":"node bin/essay.mjs demo --out .essay-work/demo",
-    "doctor":"node bin/essay.mjs doctor"
+  "name": "mantou-essay-writer",
+  "version": "0.4.0-preview.1",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Local policy-guided writing review and versioned editing for your existing agent",
+  "engines": {
+    "node": ">=22 <25"
   },
-  "devDependencies":{"esbuild":"0.28.2","fflate":"0.8.3"}
+  "packageManager": "pnpm@10.14.0",
+  "exports": {
+    ".": "./bin/sdk.mjs"
+  },
+  "bin": {
+    "mantou-essay": "./bin/essay.mjs"
+  },
+  "scripts": {
+    "build": "pnpm --filter @mantou/text-quality build && pnpm --filter @mantou/essay-writer build && node scripts/build.mjs",
+    "test": "pnpm --filter @mantou/essay-writer test && pnpm --filter @mantou/essay-web test && node --test test/release.test.mjs",
+    "check": "pnpm build && pnpm test",
+    "demo": "node bin/essay.mjs demo --out .essay-work/demo",
+    "doctor": "node bin/essay.mjs doctor",
+    "web:start": "node bin/essay-web.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "fflate": "0.8.3"
+  }
 }

@@ -4,11 +4,12 @@ import {resolve,dirname,join} from 'node:path';
 const root=process.cwd();await mkdir('bin',{recursive:true});
 await cp('packages/essay-writer/policy','policy',{recursive:true});
 const all=new Set();
-for(const [name,entry] of [['essay','packages/essay-writer/src/cli.ts'],['sdk','packages/essay-writer/src/index.ts']]){
+for(const [name,entry] of [['essay','packages/essay-writer/src/cli.ts'],['sdk','packages/essay-writer/src/index.ts'],['essay-web','packages/essay-web/src/main.mjs']]){
   const result=await build({entryPoints:[entry],outfile:'bin/'+name+'.mjs',bundle:true,platform:'node',target:'node22',format:'esm',metafile:true,sourcemap:false,
     legalComments:'inline',banner:{js:"import { createRequire as __createRequire } from 'node:module'; const require = __createRequire(import.meta.url);"}});
   for(const input of Object.keys(result.metafile.inputs))if(input.includes('node_modules/'))all.add(input);
 }
+await cp('packages/essay-web/public','web-public',{recursive:true});
 const packages=new Map();
 for(const input of all){let dir=dirname(resolve(input));
   while(dir!==dirname(dir)){

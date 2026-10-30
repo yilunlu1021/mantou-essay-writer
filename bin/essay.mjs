@@ -26019,7 +26019,7 @@ async function checkWritingWorkflow(policyRoot, path, raw) {
 
 // packages/essay-writer/src/cli.ts
 var root = resolve5(dirname3(fileURLToPath(import.meta.url)), "..");
-var VERSION = "0.3.0-preview.1";
+var VERSION = "0.4.0-preview.1";
 var HELP = `Mantou Essay Writer ${VERSION}
 Local writing review and versioned edits. Uses your existing agent for writing.
 

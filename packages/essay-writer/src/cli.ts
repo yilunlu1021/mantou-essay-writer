@@ -24,7 +24,7 @@ import { prepareLogicReview, reviewLogic, logicReviewSchema } from './logic-revi
 import { prepareRuleReview, reviewRules, ruleReviewSchema } from './rule-review.js';
 import { prepareWritingWorkflow, checkWritingWorkflow, writingWorkflowSchema } from './writing-workflow.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const VERSION='0.3.0-preview.1';
+const VERSION='0.4.0-preview.1';
 const HELP=`Mantou Essay Writer ${VERSION}
 Local writing review and versioned edits. Uses your existing agent for writing.
 

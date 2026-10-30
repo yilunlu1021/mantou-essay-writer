@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0-preview.1
+
+- Add an optional employee website with independent logins, document extraction, advisor instructions and fixed GLM/DeepSeek standard API integrations.
+- Reuse all seven current SDK review contracts with exact evidence references, bounded model calls, usage accounting and a single repair pass. Missing or failed reviews remain pending; no submission authorization is provided.
+- Keep provider keys encrypted server-side and preserve per-user job isolation, idempotent submissions and cancellation. The local-agent CLI remains available separately.
+
+
 ## 0.3.0-preview.1
 
 - Add a complete prompt, paragraph, bridge and consequential-claim logic review, required by workflow v2. Explicit local failures cannot be overridden by adoption.

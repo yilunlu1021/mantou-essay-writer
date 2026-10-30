@@ -1,4 +1,9 @@
 node_modules/
+runtime-data/
+**/build/
+**/*.sqlite*
+**/master.key
+**/bootstrap-admin.txt
 /inbox/*
 !/inbox/README.md
 /outbox/*

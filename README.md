@@ -2,7 +2,7 @@
 
 A local writing project for your existing coding agent. It prepares task-specific rules, preserves originals, validates edits, checks review records and exports versioned Word drafts. It supports Chinese, English and mixed text, with separate scopes for academic work, personal narratives, application explanations and advisor feedback.
 
-Preview 0.3 adds a dedicated logic review, contextual checks for repeated infinitive frames, and a natural-language folder entry. Read [开始使用.md](开始使用.md): place a draft and its prompt in inbox/, open the folder in your agent, and ask for a review or edit. The tool aggregates seven current review inputs and leaves human adoption separate.
+Preview 0.4 adds an optional employee website with independent accounts, document uploads, advisor instructions and server-side GLM/DeepSeek calls. The local project still works with your existing agent: read [开始使用.md](开始使用.md), place a draft and its prompt in inbox/, open the folder and ask for a review or edit. Both entries aggregate seven current review inputs and leave human adoption separate.
 
 This preview includes 55 policy groups. Mechanical findings are checked by code. Facts, reasoning, author voice and context-dependent language still need human review. The tool does not predict AI detector scores or approve an essay for submission.
 
@@ -169,3 +169,7 @@ Run `benchmark` only to read the same rubric 1.0.0. Legacy benchmark prepare/rev
 The reader rates six dimensions from 0 to 4, with exact body evidence, reasons, limitations, retention counterexamples and local decisions. Only level 0 or an unrated dimension may use an absence explanation instead of a body anchor. Type weights total 100. The tool converts the supplied ratings into five-point intervals, including the lower bound and excluding the upper bound, except that the final 95-100 interval includes 100. It does not grade text automatically. An unrated dimension or unselected prompt keeps the overall band empty. Levels 0-2 still indicate a material weakness and require rework. Explicit local changes, unresolved items or compliance issues cannot be overridden by a high band or an adopt recommendation. Why School requires declared official sources and check dates for clear school-fact status; their truth is not certified by the program.
 
 Weights are provisional until calibrated against actual advisor ratings. Source, answer, style, linguistic and discourse reviews remain separate. Detection results stay in their own evidence records. All benchmark commands are read-only, preserve historical sessions and policy, and provide no admission probability, authorship certification or submission approval.
+
+## Optional employee website
+
+The Node server in `bin/essay-web.mjs` provides independent employee login, upload/paste, advisor instructions, GLM/DeepSeek selection and automatic review. This optional server needs standard API keys configured by its administrator; the original local-agent CLI remains offline. See [the server guide](packages/essay-web/README.md). Keep `runtime-data/` private and outside the web assets. No endpoint returns provider keys. All generated documents remain review drafts.
