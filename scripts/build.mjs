@@ -10,6 +10,7 @@ for(const [name,entry] of [['essay','packages/essay-writer/src/cli.ts'],['sdk','
   for(const input of Object.keys(result.metafile.inputs))if(input.includes('node_modules/'))all.add(input);
 }
 await cp('packages/essay-web/public','web-public',{recursive:true});
+for(const file of ['research-plugin.mjs','research-network-guard.mjs'])await cp('packages/essay-web/runtime/'+file,'bin/'+file);
 const packages=new Map();
 for(const input of all){let dir=dirname(resolve(input));
   while(dir!==dirname(dir)){

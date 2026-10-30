@@ -6,6 +6,8 @@ Preview 0.4 adds an optional employee website with independent accounts, documen
 
 This preview includes 55 policy groups. Mechanical findings are checked by code. Facts, reasoning, author voice and context-dependent language still need human review. The tool does not predict AI detector scores or approve an essay for submission.
 
+The student-research development preview adds a persistent student material library and bounded DeepSeek Harness research with real Search/Fetch. It is off by default and requires a separate data directory and optional pinned runtime; see [research preview setup](packages/essay-web/README.md#学生素材与联网研究预览). Research-only tasks collect sourced candidates and do not run the seven writing reviews or authorize adoption. Production deployment remains separate.
+
 ## Start on Windows or macOS
 
 1. Download the runtime ZIP, or GitHub **Code → Download ZIP**, and extract it. Check for `bin/essay.mjs`; if it is absent, build that source checkout using CONTRIBUTING.md before running it.

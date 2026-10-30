@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased: isolated student research preview
+
+- Add explicit student membership, manually accumulated source files and immutable material versions/status audit. Each task binds an explicit same-student snapshot; switching students clears original text, attachment and stale async results.
+- Run pinned official DeepSeek Harness CLI/SDK 0.2.1-rc.5 with three fixed brokered tools. Research uses real independent Search/Fetch and exact source excerpts; provider keys stay outside the child. Cancellation, revocation, final stop reason and known/unknown billing are independent controls.
+- Keep research-only plans separate from existing seven-review writing workflows. Preserve unresolved source/year/campus applicability, remove invalid quotes and never promote adopted drafts into confirmed facts.
+- Keep preview data, accounts, cookies and process separate. This branch is a local preview and does not deploy or modify the current production release.
+
+
 - Set the per-model job budget to CNY 10 and keep monetary accounting server-side. Remove price and budget fields from browser responses, including historical results and downloadable review records, while retaining source monetary text and existing daily limits.
 
 ## 0.4.0-preview.1
