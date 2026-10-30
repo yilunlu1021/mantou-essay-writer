@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0-preview.1",
+  "version": "0.3.0-preview.1",
   "directories": [
     "bin",
     "policy",
@@ -8,6 +8,9 @@
     "scripts",
     "test",
     ".github",
+    ".trae",
+    "inbox",
+    "outbox",
     "docs/benchmarks"
   ],
   "excludedHistoricalSources": [

@@ -20,10 +20,11 @@ import { prepareDiscourseReview, reviewDiscourse, discourseReviewSchema } from '
 import { getEssayQualityBenchmark, prepareBenchmarkReview, reviewBenchmark, benchmarkProfileSchema, benchmarkReviewSchema } from './benchmark-review.js';
 import { prepareAssessmentReview, reviewAssessment, assessmentReviewSchema } from './assessment-review.js';
 import { getCommonAppBenchmark, prepareCurrentAssessmentReview, reviewCurrentAssessment, commonAppAssessmentSchema } from './common-app-assessment.js';
+import { prepareLogicReview, reviewLogic, logicReviewSchema } from './logic-review.js';
 import { prepareRuleReview, reviewRules, ruleReviewSchema } from './rule-review.js';
 import { prepareWritingWorkflow, checkWritingWorkflow, writingWorkflowSchema } from './writing-workflow.js';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
-const VERSION='0.2.0-preview.1';
+const VERSION='0.3.0-preview.1';
 const HELP=`Mantou Essay Writer ${VERSION}
 Local writing review and versioned edits. Uses your existing agent for writing.
 
@@ -35,6 +36,8 @@ node bin/essay.mjs revise --session "my essay" --patch-file edits.json
 node bin/essay.mjs status --session "my essay"
 node bin/essay.mjs audit --session "my essay"
 node bin/essay.mjs prepare-workflow --session "my essay"
+node bin/essay.mjs prepare-logic-review --session "my essay"
+node bin/essay.mjs review-logic --session "my essay" --review-file logic.json
 node bin/essay.mjs prepare-rule-review --session "my essay"
 node bin/essay.mjs review-rules --session "my essay" --review-file rules.json
 node bin/essay.mjs check-workflow --session "my essay" --review-file workflow.json
@@ -90,6 +93,7 @@ Feedback libraries use local SQLite, require a Node runtime with node:sqlite, an
 const allowed:Record<string,string[]>={
   import:['input','out','language','genre','prompt-file','audience','role','mode','authorize-revision','stage','channel','min','max','unit','protect-blocks','edit-budget'],
   prepare:['session'],audit:['session'],status:['session'],revise:['session','patch-file'],recover:['session'],
+  'prepare-logic-review':['session'], 'review-logic':['session','review-file'],
   'prepare-rule-review':['session'], 'review-rules':['session','review-file'],
   'prepare-workflow':['session'], 'check-workflow':['session','review-file'],
   'prepare-source-review':['session'],'review-source':['session','review-file'],
@@ -116,7 +120,7 @@ async function main(){
   const optional=(key:string)=>typeof values[key]==='string'?values[key] as string:undefined;
   const number=(key:string)=>{const value=optional(key);if(value===undefined)return undefined;if(!/^\d+$/.test(value)||Number(value)>200000)fail('number','--'+key+' must be an integer from 0 to 200000.');return Number(value);};
   let result:unknown;
-  if(command==='schema')result={...describeContracts(),ruleReview:z.toJSONSchema(ruleReviewSchema),writingWorkflow:z.toJSONSchema(writingWorkflowSchema),patch:z.toJSONSchema(patchSchema),sourceReview:z.toJSONSchema(sourceReviewSchema),answerReview:z.toJSONSchema(answerReviewSchema),styleReview:z.toJSONSchema(styleReviewSchema),styleEvidence:z.toJSONSchema(styleEvidenceSchema),feedbackInterpretation:z.toJSONSchema(feedbackInterpretationSchema),feedbackTrial:z.toJSONSchema(feedbackTrialSchema),linguisticReview:z.toJSONSchema(linguisticReviewSchema),discourseReview:z.toJSONSchema(discourseReviewSchema),benchmarkProfile:z.toJSONSchema(benchmarkProfileSchema),benchmarkReview:z.toJSONSchema(benchmarkReviewSchema),assessmentReview:z.toJSONSchema(commonAppAssessmentSchema),historicalAssessmentReview:z.toJSONSchema(assessmentReviewSchema),sessionContext:z.toJSONSchema(contextSchema)};
+  if(command==='schema')result={...describeContracts(),logicReview:z.toJSONSchema(logicReviewSchema),ruleReview:z.toJSONSchema(ruleReviewSchema),writingWorkflow:z.toJSONSchema(writingWorkflowSchema),patch:z.toJSONSchema(patchSchema),sourceReview:z.toJSONSchema(sourceReviewSchema),answerReview:z.toJSONSchema(answerReviewSchema),styleReview:z.toJSONSchema(styleReviewSchema),styleEvidence:z.toJSONSchema(styleEvidenceSchema),feedbackInterpretation:z.toJSONSchema(feedbackInterpretationSchema),feedbackTrial:z.toJSONSchema(feedbackTrialSchema),linguisticReview:z.toJSONSchema(linguisticReviewSchema),discourseReview:z.toJSONSchema(discourseReviewSchema),benchmarkProfile:z.toJSONSchema(benchmarkProfileSchema),benchmarkReview:z.toJSONSchema(benchmarkReviewSchema),assessmentReview:z.toJSONSchema(commonAppAssessmentSchema),historicalAssessmentReview:z.toJSONSchema(assessmentReviewSchema),sessionContext:z.toJSONSchema(contextSchema)};
   else if(command==='benchmark')result=getCommonAppBenchmark();
   else if(command==='prepare-assessment-review')result=await prepareCurrentAssessmentReview(root,required('session'),{essayType:required('essay-type'),promptStatus:required('prompt-status'),...(optional('task')?{task:required('task')}:{})});
   else if(command==='review-assessment')result=await reviewCurrentAssessment(root,required('session'),await readJson(required('review-file')));
@@ -166,6 +170,8 @@ async function main(){
       await reviseSession(root,out,patch);result={demo:'completed',...await sessionStatus(root,out)};
     }finally{await rm(temp,{recursive:true,force:true});}
   }else if(command==='prepare')result=await prepareSession(root,required('session'));
+  else if(command==='prepare-logic-review')result=await prepareLogicReview(root,required('session'));
+  else if(command==='review-logic')result=await reviewLogic(root,required('session'),await readJson(required('review-file'),8_000_000));
   else if(command==='prepare-rule-review')result=await prepareRuleReview(root,required('session'));
   else if(command==='review-rules')result=await reviewRules(root,required('session'),await readJson(required('review-file'),8_000_000));
   else if(command==='prepare-workflow')result=await prepareWritingWorkflow(root,required('session'));

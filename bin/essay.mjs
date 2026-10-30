@@ -7322,8 +7322,8 @@ var capitalizeFirstCharacter, error28;
 var init_lt = __esm({
   "node_modules/.pnpm/zod@4.4.3/node_modules/zod/v4/locales/lt.js"() {
     init_util();
-    capitalizeFirstCharacter = (text3) => {
-      return text3.charAt(0).toUpperCase() + text3.slice(1);
+    capitalizeFirstCharacter = (text4) => {
+      return text4.charAt(0).toUpperCase() + text4.slice(1);
     };
     error28 = () => {
       const Sizable = {
@@ -15242,21 +15242,21 @@ function hashValue(value2) {
   };
   return createHash("sha256").update(JSON.stringify(canonical(value2)), "utf8").digest("hex");
 }
-function countText(text3) {
+function countText(text4) {
   return {
-    englishWords: (text3.match(/\d+(?:[.,]\d+)+|[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g) ?? []).length,
-    hanCharacters: (text3.match(new RegExp("\\p{Script=Han}", "gu")) ?? []).length,
-    nonWhitespaceCodepoints: [...text3].filter((c) => !/\s/u.test(c)).length
+    englishWords: (text4.match(/\d+(?:[.,]\d+)+|[A-Za-z0-9]+(?:['’-][A-Za-z0-9]+)*/g) ?? []).length,
+    hanCharacters: (text4.match(new RegExp("\\p{Script=Han}", "gu")) ?? []).length,
+    nonWhitespaceCodepoints: [...text4].filter((c) => !/\s/u.test(c)).length
   };
 }
 function measureDocument(document) {
   return countText(document.blocks.filter((b) => b.kind !== "heading" && b.kind !== "code").map((b) => b.text).join("\n\n"));
 }
-function sentences(text3, language) {
-  return [...new Intl.Segmenter(language === "en" ? "en" : "zh", { granularity: "sentence" }).segment(text3)].map((s) => s.segment.trim()).filter(Boolean);
+function sentences(text4, language) {
+  return [...new Intl.Segmenter(language === "en" ? "en" : "zh", { granularity: "sentence" }).segment(text4)].map((s) => s.segment.trim()).filter(Boolean);
 }
-function codepointOffset(text3, utf16Offset) {
-  return [...text3.slice(0, utf16Offset)].length;
+function codepointOffset(text4, utf16Offset) {
+  return [...text4.slice(0, utf16Offset)].length;
 }
 var init_text = __esm({
   "packages/text-quality/dist/text.js"() {
@@ -15691,7 +15691,7 @@ var DEFAULT_POLICY_HASH;
 var init_policy_integrity = __esm({
   "packages/essay-writer/src/policy-integrity.ts"() {
     "use strict";
-    DEFAULT_POLICY_HASH = "3495e6674953681e88b4ae08b12b6ccf7e66f8cbdec9e925bb4a0e9abfbb66a7";
+    DEFAULT_POLICY_HASH = "b9551c632b6573aa291c53df2dcee937c110190c6344cd748fc998f0ecf6e4db";
   }
 });
 
@@ -20566,7 +20566,7 @@ function prettify(node, options, matcher, readonlyMatcher) {
   return compress(node, options, matcher, readonlyMatcher);
 }
 function compress(arr, options, matcher, readonlyMatcher) {
-  let text3;
+  let text4;
   const compressedObj = {};
   for (let i2 = 0; i2 < arr.length; i2++) {
     const tagObj = arr[i2];
@@ -20579,8 +20579,8 @@ function compress(arr, options, matcher, readonlyMatcher) {
       matcher.push(property, rawAttrs);
     }
     if (property === options.textNodeName) {
-      if (text3 === void 0) text3 = tagObj[property];
-      else text3 += "" + tagObj[property];
+      if (text4 === void 0) text4 = tagObj[property];
+      else text4 += "" + tagObj[property];
     } else if (property === void 0) {
       continue;
     } else if (tagObj[property]) {
@@ -20618,9 +20618,9 @@ function compress(arr, options, matcher, readonlyMatcher) {
       }
     }
   }
-  if (typeof text3 === "string") {
-    if (text3.length > 0) compressedObj[options.textNodeName] = text3;
-  } else if (text3 !== void 0) compressedObj[options.textNodeName] = text3;
+  if (typeof text4 === "string") {
+    if (text4.length > 0) compressedObj[options.textNodeName] = text4;
+  } else if (text4 !== void 0) compressedObj[options.textNodeName] = text4;
   return compressedObj;
 }
 function propName(obj) {
@@ -20898,12 +20898,12 @@ function readDocx(data) {
 function importText(data, extension) {
   const parts = extension.toLowerCase() === ".docx" ? readDocx(data) : utf8(data).replace(/^\uFEFF/, "").split(/\r?\n[\t ]*\r?\n/);
   if (!parts.some((p) => p.trim())) fail("empty-document", "Provide a document with body text.");
-  return documentSchema.parse({ revision: "source-" + sha2(data).slice(0, 16), blocks: parts.map((text3, i2) => ({ id: "p" + (i2 + 1), text: text3 })) });
+  return documentSchema.parse({ revision: "source-" + sha2(data).slice(0, 16), blocks: parts.map((text4, i2) => ({ id: "p" + (i2 + 1), text: text4 })) });
 }
 function writeDocx(prompt, document) {
-  function p(text3, bold = false) {
-    if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(text3)) fail("docx-text", "DOCX cannot contain these control characters.");
-    const runs = text3.split(/(\n|\t)/).map((t) => t === "\n" ? "<w:br/>" : t === "	" ? "<w:tab/>" : '<w:t xml:space="preserve">' + escape(t) + "</w:t>").join("");
+  function p(text4, bold = false) {
+    if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(text4)) fail("docx-text", "DOCX cannot contain these control characters.");
+    const runs = text4.split(/(\n|\t)/).map((t) => t === "\n" ? "<w:br/>" : t === "	" ? "<w:tab/>" : '<w:t xml:space="preserve">' + escape(t) + "</w:t>").join("");
     return '<w:p><w:pPr><w:spacing w:after="160" w:line="320" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:eastAsia="Microsoft YaHei"/><w:sz w:val="22"/>' + (bold ? "<w:b/>" : "") + "</w:rPr>" + runs + "</w:r></w:p>";
   }
   const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' + (prompt ? p(prompt, true) : "") + document.blocks.map((b) => p(b.text)).join("") + '<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr></w:body></w:document>';
@@ -21275,13 +21275,13 @@ function reviewBindings(s) {
 function fullReviewSpan(block) {
   return { blockId: block.id, start: 0, end: Array.from(block.text).length, quote: block.text };
 }
-function validateReviewSpan(span, blocks, code) {
-  const block = blocks.find((b) => b.id === span.blockId);
+function validateReviewSpan(span2, blocks, code) {
+  const block = blocks.find((b) => b.id === span2.blockId);
   if (!block) fail(code, "Use a block from the bound document.");
-  const text3 = Array.from(block.text);
-  if (span.end <= span.start || span.end > text3.length || text3.slice(span.start, span.end).join("") !== span.quote)
+  const text4 = Array.from(block.text);
+  if (span2.end <= span2.start || span2.end > text4.length || text4.slice(span2.start, span2.end).join("") !== span2.quote)
     fail(code, "Use exact, nonempty codepoint spans and quotes from the bound document.");
-  return text3;
+  return text4;
 }
 async function prepareSourceReview(policyRoot, path) {
   const s = await loadSession(policyRoot, path);
@@ -21331,17 +21331,17 @@ async function reviewSource(policyRoot, path, raw) {
   if (hashValue(record2.bindings) !== hashValue(reviewBindings(s))) fail("source-review-stale", "Prepare a source review for the current original, version, context and policy.");
   const candidateCoverage = new Map(s.document.blocks.map((b) => [b.id, new Uint8Array(Array.from(b.text).length)]));
   const sourceCoverage = new Map(s.original.blocks.map((b) => [b.id, new Uint8Array(Array.from(b.text).length)]));
-  function cover(span, blocks, coverage, unique) {
-    validateReviewSpan(span, blocks, "source-review-span");
-    const marks = coverage.get(span.blockId);
-    for (let i2 = span.start; i2 < span.end; i2++) {
+  function cover(span2, blocks, coverage, unique) {
+    validateReviewSpan(span2, blocks, "source-review-span");
+    const marks = coverage.get(span2.blockId);
+    for (let i2 = span2.start; i2 < span2.end; i2++) {
       if (unique && marks[i2]) fail("source-review-overlap", "Candidate passages must not overlap.");
       marks[i2] = 1;
     }
   }
   for (const passage of record2.passages) {
     cover(passage.candidate, s.document.blocks, candidateCoverage, true);
-    for (const span of passage.sources) cover(span, s.original.blocks, sourceCoverage, false);
+    for (const span2 of passage.sources) cover(span2, s.original.blocks, sourceCoverage, false);
   }
   for (const omission of record2.omissions) cover(omission.source, s.original.blocks, sourceCoverage, false);
   for (const [blocks, coverage] of [[s.document.blocks, candidateCoverage], [s.original.blocks, sourceCoverage]])
@@ -21470,9 +21470,9 @@ async function reviewAnswer(policyRoot, path, raw) {
   if (hashValue(record2.bindings) !== hashValue(reviewBindings(s)))
     fail("answer-review-stale", "Prepare an answer review for the current original, version, context and policy.");
   let referenceCount = 0;
-  const check2 = (span) => {
-    validateReviewSpan(span, s.document.blocks, "answer-review-span");
-    if (!span.quote.trim()) fail("answer-review-span", "Reference substantive current text.");
+  const check2 = (span2) => {
+    validateReviewSpan(span2, s.document.blocks, "answer-review-span");
+    if (!span2.quote.trim()) fail("answer-review-span", "Reference substantive current text.");
     referenceCount++;
   };
   record2.response.anchors.forEach(check2);
@@ -21645,9 +21645,9 @@ var styleReviewSchema = external_exports.object({
   overall: external_exports.object({ status: external_exports.enum(["retain", "revise", "unresolved"]), reason: note3 }).strict(),
   recommendation: external_exports.enum(["adopt", "rework"])
 }).strict();
-function substantiveSpan(span, document, code) {
-  validateReviewSpan(span, document.blocks, code);
-  if (!span.quote.trim()) fail(code, "Reference substantive text using exact Unicode codepoint offsets.");
+function substantiveSpan(span2, document, code) {
+  validateReviewSpan(span2, document.blocks, code);
+  if (!span2.quote.trim()) fail(code, "Reference substantive text using exact Unicode codepoint offsets.");
 }
 function evidenceValue(raw) {
   const evidence2 = styleEvidenceSchema.parse(raw === void 0 ? EMPTY_STYLE_EVIDENCE : raw);
@@ -21795,8 +21795,8 @@ async function reviewStyle(policyRoot, path, raw, rawEvidence) {
   const paragraphs = logicalParagraphAnchors(s.document), scopes = reportScopes(bound.documentHash, evidence2);
   const expected = new Set(paragraphs.map((anchor) => hashValue(anchor))), seen = /* @__PURE__ */ new Set();
   let referenceCount = 0;
-  const check2 = (span) => {
-    substantiveSpan(span, s.document, "style-review-span");
+  const check2 = (span2) => {
+    substantiveSpan(span2, s.document, "style-review-span");
     referenceCount++;
   };
   for (const paragraph of record2.paragraphs) {
@@ -22608,7 +22608,7 @@ async function categorizeFeedback(dbPath, rawInput = {}) {
       ${clauses.length ? "WHERE " + clauses.join(" AND ") : ""} ORDER BY r.id, o.comment_index`, ...parameters);
     const plans = [], unknownTags = /* @__PURE__ */ new Map();
     let mappedTagInstances = 0, unclassifiedObservations = 0;
-    const catalog = getFeedbackTaxonomy();
+    const catalog2 = getFeedbackTaxonomy();
     const domains = (tag) => Object.hasOwn(FEEDBACK_TAG_REVIEW_DOMAINS, tag) ? FEEDBACK_TAG_REVIEW_DOMAINS[tag] : void 0;
     for (const row of rows) {
       const tags = all(db, "SELECT value FROM observation_tags WHERE observation_id=? ORDER BY tag_index", String(row.id)).map((item) => String(item.value));
@@ -22628,7 +22628,7 @@ async function categorizeFeedback(dbPath, rawInput = {}) {
         hypothesis: "The source labels suggest possible review domains. No sentence-level language defect has been established.",
         editingDecision: "unresolved",
         reason: "Review the source wording and its context before deciding whether any change is warranted.",
-        retainCounterexample: catalog.categories.filter((category2) => mapped.has(category2.id)).flatMap((category2) => category2.retainCounterexamples).join(" "),
+        retainCounterexample: catalog2.categories.filter((category2) => mapped.has(category2.id)).flatMap((category2) => category2.retainCounterexamples).join(" "),
         authorRole: "agent",
         status: "candidate",
         methodVersion: "taxonomy:" + FEEDBACK_TAXONOMY_VERSION,
@@ -22875,15 +22875,15 @@ var generic = /^(?:always|never|everyone|everybody|everything|anyone|anything|al
 var modal = /^(?:can|could|will|would|may|might|must|should)$/u;
 var adjunct = /^(?:just|exactly|fully|really|only|finally|simply|better)$/u;
 function locateConstructionCues(anchor) {
-  const text3 = anchor.quote, tokens = Array.from(text3.matchAll(/[A-Za-z]+(?:['’][A-Za-z]+)?/gu), (match) => ({ word: match[0].toLowerCase(), start: match.index, end: match.index + match[0].length }));
-  const span = (start, end) => ({
+  const text4 = anchor.quote, tokens = Array.from(text4.matchAll(/[A-Za-z]+(?:['’][A-Za-z]+)?/gu), (match) => ({ word: match[0].toLowerCase(), start: match.index, end: match.index + match[0].length }));
+  const span2 = (start, end) => ({
     blockId: anchor.blockId,
-    start: anchor.start + Array.from(text3.slice(0, start)).length,
-    end: anchor.start + Array.from(text3.slice(0, end)).length,
-    quote: text3.slice(start, end)
+    start: anchor.start + Array.from(text4.slice(0, start)).length,
+    end: anchor.start + Array.from(text4.slice(0, end)).length,
+    quote: text4.slice(start, end)
   });
-  const part = (feature, begin, end = begin) => ({ feature, span: span(tokens[begin].start, tokens[end].end) });
-  const boundary = (index) => index > 0 && (/[;.!?]/u.test(text3.slice(tokens[index - 1].end, tokens[index].start)) || /^(?:and|but|or|yet|so)$/u.test(tokens[index].word) && /,/u.test(text3.slice(tokens[index - 1].end, tokens[index].start)));
+  const part = (feature, begin, end = begin) => ({ feature, span: span2(tokens[begin].start, tokens[end].end) });
+  const boundary = (index) => index > 0 && (/[;.!?]/u.test(text4.slice(tokens[index - 1].end, tokens[index].start)) || /^(?:and|but|or|yet|so)$/u.test(tokens[index].word) && /,/u.test(text4.slice(tokens[index - 1].end, tokens[index].start)));
   function localFind(begin, end, predicate) {
     for (let index = begin; index < Math.min(tokens.length, end); index++) {
       if (boundary(index)) break;
@@ -22985,10 +22985,10 @@ var flags2 = {
 };
 var stopwords = new Set("a an the i me my we our they their he his she her it its this that these those to of on in at for and or but so as with had have has was were is are be been by would could should".split(" "));
 var genericHeads = "(?:thing|things|person|people|someone|something|problem|question|experience|reason|way|method|approach|situation|process|exchange)";
-function offsetMap(text3) {
-  const result = new Uint32Array(text3.length + 1);
+function offsetMap(text4) {
+  const result = new Uint32Array(text4.length + 1);
   let units = 0, points = 0;
-  for (const character of text3) {
+  for (const character of text4) {
     result[units] = points;
     if (character.length === 2) result[units + 1] = points;
     units += character.length;
@@ -23089,37 +23089,37 @@ function analyseEnglishDocument(raw) {
     });
   }
   for (let index = 0; index < units.length; index++) {
-    const unit = units[index], text3 = unit.anchor.quote;
+    const unit = units[index], text4 = unit.anchor.quote;
     const previous = units[index - 1];
     const previousAnchors = units.slice(Math.max(0, index - 2), index).map((item) => item.anchor);
     for (const construction of locateConstructionCues(unit.anchor))
       add(unit, "information-gain", construction.code, construction.observedCue, previousAnchors, construction);
-    const references = text3.match(new RegExp("\\b(?:this|that|these|those)\\s+" + genericHeads + "\\b|\\b(?:a|an|the)\\s+" + genericHeads + "\\b", "giu"));
+    const references = text4.match(new RegExp("\\b(?:this|that|these|those)\\s+" + genericHeads + "\\b|\\b(?:a|an|the)\\s+" + genericHeads + "\\b", "giu"));
     if (references) add(unit, "reference-recoverability", "referent-identifiability", references.join(" | "), previousAnchors);
-    if (/\b(?:it|they|them|their|its)\b/iu.test(text3))
+    if (/\b(?:it|they|them|their|its)\b/iu.test(text4))
       add(unit, "reference-recoverability", "pronominal-reference", "A pronoun or possessive has a discourse referent to verify.", previousAnchors);
-    if (/\b(?:he|she|they|everyone|students|friends|[A-Z][a-z]+)\s+(?:felt|wanted|knew|believed|realized|understood|feared|worried)\b/u.test(text3))
+    if (/\b(?:he|she|they|everyone|students|friends|[A-Z][a-z]+)\s+(?:felt|wanted|knew|believed|realized|understood|feared|worried)\b/u.test(text4))
       add(unit, "narrative-viewpoint", "knowledge-attribution", "A possible other-person mental-state attribution needs its actual source.");
-    if (/\b(?:came naturally to me|showed my|demonstrated my|proved that I|I (?:was|am) the kind of)\b/iu.test(text3))
+    if (/\b(?:came naturally to me|showed my|demonstrated my|proved that I|I (?:was|am) the kind of)\b/iu.test(text4))
       add(unit, "narrative-viewpoint", "editorial-characterization", "A character assessment may be replacing the author actual choices.");
-    if (/\bI\s+(?:wanted|learned|realized|understood|hoped|was able)\b/iu.test(text3))
+    if (/\bI\s+(?:wanted|learned|realized|understood|hoped|was able)\b/iu.test(text4))
       add(unit, "predicate-focus", "intention-cognition-frame", "An intention, ability or cognition frame is present.");
-    if (/^(?:Before|After|While|When|Although|If|Once)\b/u.test(text3)) {
+    if (/^(?:Before|After|While|When|Although|If|Once)\b/u.test(text4)) {
       add(unit, "clause-attachment", "initial-subordinator-cue", "Initial subordinate or temporal construction; exact function requires reading.");
       add(unit, "discourse-linking", "temporal-conditional-link", "An overt temporal or conditional relation must match the source.", previousAnchors);
     }
-    if (/\b(?:which|whose|where|why)\b|\bso (?:that )?(?:I|we|they|students|contestants)\b/iu.test(text3))
+    if (/\b(?:which|whose|where|why)\b|\bso (?:that )?(?:I|we|they|students|contestants)\b/iu.test(text4))
       add(unit, "clause-attachment", "embedded-attachment-cue", "A relative, interrogative, locative or purpose cue is present; attachment is unparsed.");
-    const nominalCues = text3.match(/\b[A-Za-z]{4,}(?:tion|sion|ment|ness|ity)\b/gu) ?? [];
+    const nominalCues = text4.match(/\b[A-Za-z]{4,}(?:tion|sion|ment|ness|ity)\b/gu) ?? [];
     if (nominalCues.length >= 3)
       add(unit, "register-fit", "nominal-density-cue", "Suffix cues to nominal wording: " + nominalCues.join(", ") + ". These are not POS tags or a quality score.");
-    if (/\b(?:algorithm|programming|curriculum|examination)\b/iu.test(text3))
+    if (/\b(?:algorithm|programming|curriculum|examination)\b/iu.test(text4))
       add(unit, "register-fit", "domain-term-retention", "A domain term is present; verify necessity and protect accurate terminology.");
-    if (/\b(?:always|never|everyone|nobody|every|all)\b/iu.test(text3))
+    if (/\b(?:always|never|everyone|nobody|every|all)\b/iu.test(text4))
       add(unit, "evidence-scope", "scope-quantifier", "A scope expression needs its stated domain, source and author judgment.");
     if (previous && previous.paragraphIndex === unit.paragraphIndex) {
       const lead = (value2) => value2.match(/^(?:If I|I wanted|I learned|I could|I had|I built|I added)\b/u)?.[0];
-      if (lead(text3) && lead(text3) === lead(previous.anchor.quote))
+      if (lead(text4) && lead(text4) === lead(previous.anchor.quote))
         add(unit, "cadence-pattern", "adjacent-parallel-frame", "The neighboring sentences begin with the same frame.", [previous.anchor]);
       const shared = overlap(previous.words, unit.words);
       if (shared.shared.length >= 4 && shared.coefficient >= 0.65)
@@ -23287,12 +23287,12 @@ async function reviewLinguistic(policyRoot, path, raw, evidence2) {
   const candidates = new Map(prepared2.analysis.candidates.map((item) => [item.id, item]));
   const seen = /* @__PURE__ */ new Set();
   let referenceCount = 0;
-  const current = (span) => {
-    validateReviewSpan(span, session.document.blocks, "linguistic-current-span");
+  const current = (span2) => {
+    validateReviewSpan(span2, session.document.blocks, "linguistic-current-span");
     referenceCount++;
   };
-  const original = (span) => {
-    validateReviewSpan(span, session.original.blocks, "linguistic-original-span");
+  const original = (span2) => {
+    validateReviewSpan(span2, session.original.blocks, "linguistic-original-span");
     referenceCount++;
   };
   for (const decision3 of record2.decisions) {
@@ -23439,10 +23439,10 @@ var flags3 = {
   automaticRewrite: false,
   deliveryAuthorized: false
 };
-function codepointOffsets(text3) {
-  const offsets = new Uint32Array(text3.length + 1);
+function codepointOffsets(text4) {
+  const offsets = new Uint32Array(text4.length + 1);
   let units = 0, points = 0;
-  for (const character of text3) {
+  for (const character of text4) {
     offsets[units] = points;
     if (character.length === 2) offsets[units + 1] = points;
     units += character.length;
@@ -23871,11 +23871,11 @@ async function prepareBenchmarkReview(policyRoot, path, rawProfile) {
   const session = await loadSession(policyRoot, path), profile = benchmarkProfileSchema.parse(rawProfile);
   if (profile.promptStatus === "supplied" && !session.manifest.context.prompt.trim())
     fail("benchmark-prompt", "A supplied prompt profile requires a nonempty prompt in the bound session.");
-  const catalog = getEssayQualityBenchmark();
+  const catalog2 = getEssayQualityBenchmark();
   const bindings3 = {
     ...reviewBindings(session),
     rubricVersion: BENCHMARK_RUBRIC_VERSION,
-    rubricHash: catalog.rubricHash,
+    rubricHash: catalog2.rubricHash,
     profileHash: hashValue(profile)
   };
   const audit = auditText({
@@ -23891,12 +23891,12 @@ async function prepareBenchmarkReview(policyRoot, path, rawProfile) {
     methodVersion: HUMANIER_METHOD_VERSION,
     bindings: bindings3,
     profile,
-    rubric: catalog.rubric,
+    rubric: catalog2.rubric,
     context: session.manifest.context,
     original: session.original,
     document: session.document,
-    scoreReportingVersion: catalog.scoreReportingVersion,
-    scoreReporting: catalog.scoreReporting,
+    scoreReportingVersion: catalog2.scoreReportingVersion,
+    scoreReporting: catalog2.scoreReporting,
     observedMechanicalErrors: audit.observedErrors,
     changedFromOriginal,
     instructions: [
@@ -23950,9 +23950,9 @@ async function reviewBenchmark(policyRoot, path, raw) {
     fail("benchmark-review-stale", "Prepare for the current session, original, document, context, policy, rubric and profile.");
   const session = await loadSession(policyRoot, path);
   let referenceCount = 0;
-  const checkSpan = (span) => {
-    validateReviewSpan(span, session.document.blocks, "benchmark-review-span");
-    if (!span.quote.trim()) fail("benchmark-review-span", "Use substantive exact current codepoint spans.");
+  const checkSpan = (span2) => {
+    validateReviewSpan(span2, session.document.blocks, "benchmark-review-span");
+    if (!span2.quote.trim()) fail("benchmark-review-span", "Use substantive exact current codepoint spans.");
     referenceCount++;
   };
   record2.dimensions.forEach((dimension2, index) => {
@@ -24135,7 +24135,7 @@ async function reviewAssessment(policyRoot, path, raw) {
   if (new Set(justifiedIds).size !== justifiedIds.length || justifiedIds.length !== fullMarkIds.length || justifiedIds.some((id2) => !fullMarkIds.includes(id2)))
     fail("assessment-calibration", "Justify every level 4 once, and only level 4 dimensions, against level 3 and its limits.");
   const ids = /* @__PURE__ */ new Set();
-  const checkSpan = (span) => validateReviewSpan(span, prepared2.document.blocks, "assessment-span");
+  const checkSpan = (span2) => validateReviewSpan(span2, prepared2.document.blocks, "assessment-span");
   record2.reading.anchors.forEach(checkSpan);
   for (const issue2 of record2.issues) {
     if (ids.has(issue2.id)) fail("assessment-issue", "Use unique issue IDs.");
@@ -24927,6 +24927,36 @@ var COMMON_APP_V2_PROTOCOL = "# Common App\u4E2A\u4EBA\u53D9\u4E8B\u8BC4\u5206\u
 // packages/essay-writer/src/common-app-assessment.ts
 init_sessions();
 init_files();
+
+// packages/essay-writer/src/logic-score-consistency.ts
+function logicScoreConsistency(record2) {
+  const groups = {
+    "causal-chain": ["P1.4", "C2.1", "C2.2", "C2.3", "C2.4", "C2.5"],
+    "action-evidence": ["E3.1", "E3.2", "E3.3", "E3.4", "E3.5"],
+    "first-read": ["N4.1", "N4.2", "P1.3", "P1.5"]
+  };
+  const logicIds = new Set(Object.values(groups).flat()), scores = new Map(record2.items.map((i2) => [i2.id, i2.score]));
+  const material = record2.issues.filter((i2) => i2.severity === "material");
+  const conflicts = [];
+  for (const issue2 of material) {
+    const inflated = issue2.itemIds.filter((id2) => logicIds.has(id2) && (scores.get(id2) ?? 0) > 3);
+    if (inflated.length) conflicts.push({ id: issue2.id, itemIds: inflated, code: "material-logic-gap-score-above-three" });
+  }
+  for (const check2 of record2.criticalChecks.filter((c) => c.status === "needs-rework")) {
+    const affected = groups[check2.id] ?? [];
+    if (!material.some((issue2) => issue2.itemIds.some((id2) => affected.includes(id2))))
+      conflicts.push({ id: check2.id, itemIds: [], code: "material-logic-gap-needs-criterion-attribution" });
+  }
+  return {
+    engine: "logic-score-consistency@1",
+    conflicts,
+    verified: conflicts.length === 0,
+    semanticRatingCertified: false,
+    automaticScoreAdjustment: false
+  };
+}
+
+// packages/essay-writer/src/common-app-assessment.ts
 var COMMON_APP_ASSESSMENT_VERSION = "judgment-evidence-assessment@3";
 var COMMON_APP_RUBRIC_VERSION = "judgment-evidence-95plus5-2.1";
 var COMMON_APP_QUALITY_FLOOR = 83;
@@ -25082,7 +25112,11 @@ async function prepareCommonAppAssessment(policyRoot, path, rawProfile) {
     context: s.manifest.context,
     document: s.document,
     original: s.original,
-    instructions: rubric2.instructions,
+    instructions: [
+      ...rubric2.instructions,
+      "Before rating, review whether the text makes sense, convinces and answers every actual prompt requirement. Use prepare-logic-review and review-logic for a complete writing workflow.",
+      "A material logic gap requires a material issue attributed to the affected criterion. That criterion cannot receive 4 or 5. Keep unrelated strengths and optional improvements separate; unknown evidence remains unrated. Contradictory declarations invalidate the total without automatically changing ratings."
+    ],
     template: {
       schemaVersion: COMMON_APP_ASSESSMENT_VERSION,
       rubricVersion: rubric2.version,
@@ -25176,7 +25210,9 @@ async function reviewCommonAppAssessment(policyRoot, path, raw) {
     fail("assessment-readiness", "A clear length/mechanics check requires 635\u2013650 words and no mechanical blocker.");
   const sum = (items) => items.some((item) => item.score === null) ? null : items.reduce((total2, item) => total2 + item.score, 0);
   const base = sum(r.items.slice(0, 19)), bonusRaw = bonus.score, bonusCounted = bonusRaw;
-  const total = base === null || bonusCounted === null ? null : Math.min(rubric2.totalMax, base + bonusCounted);
+  const declaredTotal = base === null || bonusCounted === null ? null : Math.min(rubric2.totalMax, base + bonusCounted);
+  const scoreConsistency = logicScoreConsistency(r);
+  const total = scoreConsistency.verified ? declaredTotal : null;
   const groups = Object.fromEntries(["P1", "C2", "E3", "N4", "V5", "X6"].map((group) => [group, sum(r.items.filter((item) => item.id.startsWith(group + ".")))]));
   const effectiveTarget = Math.max(COMMON_APP_QUALITY_FLOOR, r.target.minimumScore100 ?? COMMON_APP_QUALITY_FLOOR);
   const targetMet = total !== null && total >= effectiveTarget;
@@ -25185,6 +25221,7 @@ async function reviewCommonAppAssessment(policyRoot, path, raw) {
   const unaccepted = r.issues.filter((issue2) => !accepted.has(issue2.id));
   const criticalFailures = COMMON_APP_CRITICAL_ITEMS.filter((id2) => byId.get(id2).score === null || byId.get(id2).score < 4);
   const qualityBlockers = [
+    ...scoreConsistency.conflicts.map((c) => `score-conflict-${c.id}`),
     ...diagnosis.verdict !== "sufficient" ? ["story-selection-not-sufficient"] : [],
     ...diagnosis.development.status !== "supported" ? ["story-development-not-supported"] : [],
     ...diagnosis.paragraphProgression.flatMap((p, index) => ["repeats", "unresolved"].includes(p.status) ? [`story-paragraph-${index + 1}-${p.status}`] : []),
@@ -25208,11 +25245,13 @@ async function reviewCommonAppAssessment(policyRoot, path, raw) {
     rubricHash: rubric2.rubricHash,
     bindings: r.bindings,
     recordHash: hashValue(r),
+    scoreConsistency,
     score: {
       base,
       bonusRaw,
       bonusCounted,
       total,
+      declaredTotal,
       groups,
       assessedItems: r.items.filter((item) => item.score !== null).length,
       unratedItems: r.items.filter((item) => item.score === null).map((item) => item.id)
@@ -25255,6 +25294,223 @@ async function reviewCurrentAssessment(policyRoot, path, raw) {
   return reviewAssessment(policyRoot, path, raw);
 }
 
+// packages/essay-writer/src/logic-review.ts
+init_zod();
+init_dist();
+init_sessions();
+init_files();
+var LOGIC_REVIEW_ENGINE = "writing-logic-review@1";
+var text2 = external_exports.string().trim().max(4e3);
+var span = reviewSpanSchema;
+var judgment = external_exports.enum(["clear", "issue", "unverified"]);
+var promptSpan = external_exports.object({ start: external_exports.number().int().nonnegative(), end: external_exports.number().int().nonnegative(), quote: external_exports.string().max(4e4) }).strict();
+var overallCheck = external_exports.object({ status: judgment, reason: text2, anchors: external_exports.array(span).max(100) }).strict();
+var logicReviewSchema = external_exports.object({
+  schemaVersion: external_exports.literal(LOGIC_REVIEW_ENGINE),
+  bindings: reviewBindingsSchema,
+  catalogHash: external_exports.string().regex(/^[a-f0-9]{64}$/u),
+  reviewer: external_exports.object({ id: text2, participatedInEditing: external_exports.boolean(), independence: external_exports.enum(["same-editor", "separate-pass", "independent-reader", "unknown"]) }).strict(),
+  centralAnswer: text2,
+  requirements: external_exports.array(external_exports.object({
+    id: external_exports.string().min(1),
+    promptSpan,
+    requirement: text2,
+    status: external_exports.enum(["answered", "partial", "unanswered", "unverified", "not-applicable"]),
+    answerAnchors: external_exports.array(span).max(100),
+    reason: text2
+  }).strict()).max(200),
+  paragraphs: external_exports.array(external_exports.object({
+    anchor: span,
+    requirementIds: external_exports.array(external_exports.string()).max(200),
+    role: external_exports.enum(["context", "event", "judgment", "response", "consequence", "plan"]),
+    contribution: text2,
+    status: external_exports.enum(["supports-answer", "material-pile", "off-topic", "unverified"]),
+    claimCoverageReason: text2,
+    claims: external_exports.array(external_exports.object({
+      anchor: span,
+      kind: external_exports.enum(["observation", "feeling", "inference", "plan"]),
+      evidence: external_exports.array(span).max(100),
+      warrant: text2,
+      counterReading: text2,
+      scopeLimit: text2,
+      status: external_exports.enum(["supported", "unsupported", "contradicted", "unverified"])
+    }).strict()).max(100),
+    reason: text2
+  }).strict()).max(5e3),
+  bridges: external_exports.array(external_exports.object({
+    from: span,
+    to: span,
+    relation: external_exports.enum(["chronology", "cause", "comparison", "contrast", "elaboration", "continuation", "plan"]),
+    fromPremise: text2,
+    whyFollows: text2,
+    addedConsequence: text2,
+    missingPremise: text2,
+    status: external_exports.enum(["supported", "missing-premise", "forced-link", "unverified"])
+  }).strict()).max(5e3),
+  overall: external_exports.object({
+    makesSense: overallCheck,
+    convincing: overallCheck,
+    answersPrompt: overallCheck,
+    skepticalReading: text2,
+    questions: external_exports.array(external_exports.object({ question: text2, anchor: span, material: external_exports.boolean(), resolved: external_exports.boolean(), reason: text2 }).strict()).max(200)
+  }).strict(),
+  recommendation: external_exports.enum(["adopt", "rework"])
+}).strict();
+function catalog(context, document) {
+  const paragraphs = logicalParagraphAnchors(document);
+  const bridges = paragraphs.slice(1).map((to, i2) => ({ from: paragraphs[i2], to }));
+  const prompt = { start: 0, end: Array.from(context.prompt).length, quote: context.prompt };
+  return { paragraphs, bridges, prompt, hash: hashValue({ engine: LOGIC_REVIEW_ENGINE, paragraphs, bridges, prompt }) };
+}
+async function prepareLogicReview(policyRoot, path) {
+  const s = await loadSession(policyRoot, path), c = catalog(s.manifest.context, s.document);
+  return {
+    schemaVersion: LOGIC_REVIEW_ENGINE,
+    bindings: reviewBindings(s),
+    catalogHash: c.hash,
+    context: s.manifest.context,
+    document: s.document,
+    original: s.original,
+    paragraphs: c.paragraphs,
+    bridges: c.bridges,
+    instructions: [
+      "Read the exact question and current text independently of earlier scores and editing justifications. State a direct central answer before language polishing.",
+      "Split the actual prompt into requirements with exact prompt spans and answer anchors. Cover the full prompt; conditions or optional parts need explicit grounds, not silent omission.",
+      "Cover every logical paragraph and adjacent paragraph bridge in order. Explain its contribution to the answer, the starting premise, why the next step follows and what it adds. A chronology or stable relationship can be valid without a growth arc.",
+      "Inspect every consequential claim: distinguish observation, feeling, inference and plan; quote current evidence, explain its warrant, strongest reasonable counter-reading and scope. Do not add boilerplate warrants to the essay itself.",
+      "Evidence, more material, a shared keyword or a transition word does not establish a convincing argument. Missing conditions, a forced link, off-topic material or unanswered questions require rework.",
+      "Do not require each feeling to prove an ability or lead to a new action. A source-supported feeling or concrete negotiated agreement may answer the question.",
+      "Separate makesSense, convincing and answersPrompt. If material gaps remain, relevant 0-5 logic criteria cannot earn 4 or 5; this is not a new total score or a cap on unrelated strengths.",
+      "These are reviewer declarations. The tool validates exact coverage, bindings and explicit gaps, not semantic truth, exhaustive claim discovery, independent reading or human approval. Keep raw records outside immutable version directories."
+    ],
+    template: {
+      schemaVersion: LOGIC_REVIEW_ENGINE,
+      bindings: reviewBindings(s),
+      catalogHash: c.hash,
+      reviewer: { id: "", participatedInEditing: false, independence: "unknown" },
+      centralAnswer: "",
+      requirements: c.prompt.quote.trim() ? [{ id: "q1", promptSpan: c.prompt, requirement: "", status: "unverified", answerAnchors: [], reason: "" }] : [],
+      paragraphs: c.paragraphs.map((anchor) => ({
+        anchor,
+        requirementIds: [],
+        role: "context",
+        contribution: "",
+        status: "unverified",
+        claimCoverageReason: "",
+        claims: [],
+        reason: ""
+      })),
+      bridges: c.bridges.map((pair) => ({ ...pair, relation: "continuation", fromPremise: "", whyFollows: "", addedConsequence: "", missingPremise: "", status: "unverified" })),
+      overall: {
+        makesSense: { status: "unverified", reason: "", anchors: [] },
+        convincing: { status: "unverified", reason: "", anchors: [] },
+        answersPrompt: { status: "unverified", reason: "", anchors: [] },
+        skepticalReading: "",
+        questions: []
+      },
+      recommendation: "rework"
+    },
+    containsDocumentText: true,
+    requiresHumanReview: true,
+    reasoningCertified: false,
+    deliveryAuthorized: false
+  };
+}
+async function reviewLogic(policyRoot, path, raw) {
+  const s = await loadSession(policyRoot, path), r = logicReviewSchema.parse(raw), c = catalog(s.manifest.context, s.document);
+  if (hashValue(r.bindings) !== hashValue(reviewBindings(s)) || r.catalogHash !== c.hash)
+    fail("logic-review-stale", "Prepare for the current question, source, document, policy and engine.");
+  const failures = [], pending = [];
+  const stop = (id2, code) => failures.push({ id: id2, code });
+  const wait = (id2, code) => pending.push({ id: id2, code });
+  const check2 = (a) => {
+    validateReviewSpan(a, s.document.blocks, "logic-review-span");
+    if (!a.quote.trim()) fail("logic-review-span", "Use substantive current essay evidence.");
+  };
+  if (!r.reviewer.id || !r.centralAnswer) wait("whole", "missing-reader-or-central-answer");
+  if (r.reviewer.independence === "unknown") wait("whole", "reader-process-unverified");
+  if (r.reviewer.participatedInEditing && r.reviewer.independence === "independent-reader")
+    fail("logic-review-reader", "An editor may record a separate pass, not declare an independent reader.");
+  if (!s.manifest.context.prompt.trim()) wait("prompt", "actual-prompt-missing");
+  const promptChars = Array.from(s.manifest.context.prompt), coverage = new Uint8Array(promptChars.length);
+  const ids = /* @__PURE__ */ new Set();
+  for (const q of r.requirements) {
+    if (ids.has(q.id)) fail("logic-review-prompt-coverage", "Use unique prompt requirement IDs.");
+    ids.add(q.id);
+    const a = q.promptSpan;
+    if (a.end <= a.start || a.end > promptChars.length || promptChars.slice(a.start, a.end).join("") !== a.quote || !a.quote.trim())
+      fail("logic-review-prompt-span", "Use exact, nonempty codepoint spans from the actual prompt.");
+    for (let i2 = a.start; i2 < a.end; i2++) coverage[i2] = 1;
+    q.answerAnchors.forEach(check2);
+    if (!q.requirement || !q.reason || q.status === "unverified") wait(q.id, "prompt-requirement-unverified");
+    if (q.status === "answered" && !q.answerAnchors.length) wait(q.id, "answer-evidence-missing");
+    if (q.status === "partial" || q.status === "unanswered") stop(q.id, "prompt-not-answered");
+  }
+  if (promptChars.some((ch, i2) => /\S/u.test(ch) && !coverage[i2])) fail("logic-review-prompt-coverage", "Account for the complete actual prompt.");
+  if (!r.requirements.some((q) => q.status !== "not-applicable")) wait("prompt", "actual-answer-requirement-missing");
+  if (r.paragraphs.length !== c.paragraphs.length || r.paragraphs.some((p, i2) => hashValue(p.anchor) !== hashValue(c.paragraphs[i2])))
+    fail("logic-review-paragraph-coverage", "Cover every complete logical paragraph once in the current order.");
+  r.paragraphs.forEach((p, i2) => {
+    check2(p.anchor);
+    const id2 = `paragraph-${i2 + 1}`;
+    if (new Set(p.requirementIds).size !== p.requirementIds.length || p.requirementIds.some((id3) => !ids.has(id3)))
+      fail("logic-review-requirement-link", "Reference unique declared prompt requirement IDs.");
+    if (!p.requirementIds.length || !p.contribution || !p.reason || !p.claimCoverageReason || p.status === "unverified") wait(id2, "paragraph-unverified");
+    if (p.status === "material-pile" || p.status === "off-topic") stop(id2, p.status);
+    for (const claim of p.claims) {
+      check2(claim.anchor);
+      claim.evidence.forEach(check2);
+      if (claim.anchor.blockId !== p.anchor.blockId || claim.anchor.start < p.anchor.start || claim.anchor.end > p.anchor.end)
+        fail("logic-review-claim-scope", "Place a claim in the paragraph being reviewed.");
+      if (!claim.warrant || !claim.counterReading || !claim.scopeLimit || !claim.evidence.length || claim.status === "unverified") wait(id2, "claim-unverified");
+      if (claim.status === "unsupported" || claim.status === "contradicted") stop(id2, `claim-${claim.status}`);
+    }
+  });
+  if (r.bridges.length !== c.bridges.length || r.bridges.some((b, i2) => hashValue({ from: b.from, to: b.to }) !== hashValue(c.bridges[i2])))
+    fail("logic-review-bridge-coverage", "Review every adjacent logical paragraph bridge in order.");
+  r.bridges.forEach((b, i2) => {
+    check2(b.from);
+    check2(b.to);
+    const id2 = `bridge-${i2 + 1}`;
+    if (!b.fromPremise || !b.whyFollows || !b.addedConsequence || b.status === "unverified") wait(id2, "bridge-unverified");
+    if (b.status === "missing-premise" || b.status === "forced-link" || b.missingPremise.trim()) stop(id2, "bridge-missing-or-forced");
+  });
+  for (const key of ["makesSense", "convincing", "answersPrompt"]) {
+    const item = r.overall[key];
+    item.anchors.forEach(check2);
+    if (!item.reason || !item.anchors.length || item.status === "unverified") wait(key, "overall-unverified");
+    if (item.status === "issue") stop(key, "overall-issue");
+  }
+  if (!r.overall.skepticalReading) wait("whole", "skeptical-reading-missing");
+  for (const [i2, q] of r.overall.questions.entries()) {
+    check2(q.anchor);
+    if (!q.question || !q.reason) wait(`question-${i2 + 1}`, "question-unverified");
+    if (q.material && !q.resolved) stop(`question-${i2 + 1}`, "material-reader-question");
+  }
+  if (r.recommendation === "rework") stop("whole", "reviewer-rework");
+  return {
+    schemaVersion: LOGIC_REVIEW_ENGINE,
+    bindings: reviewBindings(s),
+    catalogHash: c.hash,
+    recordHash: hashValue(r),
+    reviewDecision: failures.length ? "needs-rework" : pending.length ? "needs-review" : "recorded",
+    failures,
+    pending,
+    paragraphCount: r.paragraphs.length,
+    bridgeCount: r.bridges.length,
+    promptRequirementCount: r.requirements.length,
+    relevantLogicScoreCeiling: failures.some((item) => item.code !== "reviewer-rework") ? 3 : null,
+    scoreScale: "related 0-5 criteria only; no total score assigned",
+    coverageVerified: true,
+    claimCoverageCertified: false,
+    reasoningCertified: false,
+    independentReaderVerified: false,
+    containsDocumentText: false,
+    requiresHumanReview: true,
+    deliveryAuthorized: false
+  };
+}
+
 // packages/essay-writer/src/rule-review.ts
 init_zod();
 init_dist();
@@ -25285,27 +25541,100 @@ function writingRuleCards(policy, applicable) {
   })));
 }
 
+// packages/essay-writer/src/expression-inventory.ts
+function expressionInventory(document) {
+  const sentenceRows = [];
+  const to = [];
+  for (const block of document.blocks.filter((block2) => block2.kind === "body")) {
+    for (const part of new Intl.Segmenter("en", { granularity: "sentence" }).segment(block.text)) {
+      const quote = part.segment.trim();
+      if (!quote || !/[A-Za-z]/u.test(quote)) continue;
+      const begin = part.index + part.segment.indexOf(quote);
+      const start = Array.from(block.text.slice(0, begin)).length;
+      const sentence = { blockId: block.id, start, end: start + Array.from(quote).length, quote };
+      sentenceRows.push({ id: `es${sentenceRows.length + 1}`, span: sentence });
+      for (const hit of quote.matchAll(/\bto\b/giu)) {
+        const offset = Array.from(quote.slice(0, hit.index)).length;
+        to.push({ id: `to${to.length + 1}`, span: { blockId: block.id, start: start + offset, end: start + offset + 2, quote: hit[0] }, sentence });
+      }
+    }
+  }
+  const families = [
+    {
+      id: "enabling-shell",
+      description: "Repeated allow/let/help/give/offer frames may postpone the actual action.",
+      pattern: /\b(?:allow(?:s|ed)?|enable(?:s|d)?|lets?|help(?:s|ed)?|gives?|gave|given|offer(?:s|ed)?|provide(?:s|d)?)\b/giu
+    },
+    {
+      id: "opportunity-shell",
+      description: "Repeated opportunity/chance/room/permission frames need distinct information functions.",
+      pattern: /\b(?:opportunit(?:y|ies)|chance|room|permission|prospect|goal)\b/giu
+    },
+    {
+      id: "predicate-to-shell",
+      description: "Repeated goal/attempt/need plus to may replace direct source actions.",
+      pattern: /\b(?:need(?:s|ed)?|learn(?:s|ed)?|tr(?:y|ies|ied)|seek(?:s)?|sought|plan(?:s|ned)?|hope(?:s|d)?|aim(?:s|ed)?|struggle(?:s|d)?|agree(?:s|d)?)\s+to\b/giu
+    },
+    { id: "purpose-opening", description: "Repeated To openings require comparison of the actual relation and sentence focus.", pattern: /^To\b/gu }
+  ];
+  const patterns = families.flatMap((family) => {
+    const occurrences = sentenceRows.flatMap((row) => {
+      const matches = [...row.span.quote.matchAll(family.pattern)];
+      return matches.length ? [{ sentenceId: row.id, anchor: row.span, hits: matches.length }] : [];
+    });
+    return occurrences.length < 2 ? [] : [{
+      id: family.id,
+      description: family.description,
+      occurrences,
+      candidateOnly: true,
+      numericLimit: null
+    }];
+  });
+  return { to, patterns, metrics: {
+    toWords: to.length,
+    sentencesWithTo: sentenceRows.filter((row) => /\bto\b/iu.test(row.span.quote)).length,
+    sentences: sentenceRows.length
+  }, classificationCertified: false, numericLimit: null };
+}
+
 // packages/essay-writer/src/rule-review.ts
-var RULE_REVIEW_ENGINE = "writing-rule-review@1";
-var text2 = external_exports.string().trim().max(4e3);
+var RULE_REVIEW_ENGINE = "writing-rule-review@2";
+var text3 = external_exports.string().trim().max(4e3);
 var digest9 = external_exports.string().regex(/^[a-f0-9]{64}$/u);
 var status2 = external_exports.enum(["PASS", "FAIL", "UNVERIFIED", "NOT_APPLICABLE", "EXEMPT"]);
 var evidence = external_exports.discriminatedUnion("kind", [
   external_exports.object({ kind: external_exports.literal("document"), span: reviewSpanSchema }).strict(),
   external_exports.object({ kind: external_exports.literal("original"), span: reviewSpanSchema }).strict(),
-  external_exports.object({ kind: external_exports.literal("process"), note: text2 }).strict()
+  external_exports.object({ kind: external_exports.literal("process"), note: text3 }).strict()
 ]);
-var decision2 = external_exports.object({ status: status2, reason: text2, evidence: external_exports.array(evidence).max(100), authority: text2 });
+var decision2 = external_exports.object({ status: status2, reason: text3, evidence: external_exports.array(evidence).max(100), authority: text3 });
 var ruleReviewSchema = external_exports.object({
   schemaVersion: external_exports.literal(RULE_REVIEW_ENGINE),
   bindings: reviewBindingsSchema,
   catalogHash: digest9,
-  execution: external_exports.object({ provider: text2.nullable(), model: text2.nullable(), settings: text2.nullable() }).strict(),
+  execution: external_exports.object({ provider: text3.nullable(), model: text3.nullable(), settings: text3.nullable() }).strict(),
   checks: external_exports.array(decision2.extend({
     checkId: external_exports.string().min(1),
     requirementHash: digest9,
-    details: external_exports.array(decision2.extend({ requirement: text2 }).strict()).max(100)
+    details: external_exports.array(decision2.extend({ requirement: text3 }).strict()).max(100)
   }).strict()).max(2e3),
+  expression: external_exports.object({
+    to: external_exports.array(external_exports.object({
+      id: external_exports.string(),
+      role: external_exports.enum(["infinitive", "preposition", "fixed-name-or-evidence", "other", "unresolved"]),
+      status: external_exports.enum(["retain", "revise", "unresolved"]),
+      informationFunction: text3,
+      sourceComparison: text3,
+      reason: text3
+    }).strict()).max(1e4),
+    patterns: external_exports.array(external_exports.object({
+      id: external_exports.string(),
+      judgment: external_exports.enum(["distinct-functions", "repetitive-template", "unresolved"]),
+      status: external_exports.enum(["retain", "revise", "unresolved"]),
+      reason: text3,
+      operation: external_exports.enum(["retain", "delete-redundancy", "restore-source-action", "reorganize-information", "needs-source", "unresolved"])
+    }).strict()).max(100)
+  }).strict(),
   grammar: external_exports.object({
     ing: external_exports.array(external_exports.object({ id: external_exports.string(), classification: external_exports.enum([
       "present-progressive",
@@ -25313,19 +25642,26 @@ var ruleReviewSchema = external_exports.object({
       "excluded-word",
       "prohibited",
       "unresolved"
-    ]), construction: reviewSpanSchema.nullable(), reason: text2 }).strict()).max(2e3),
-    referents: external_exports.array(external_exports.object({ id: external_exports.string(), verdict: external_exports.enum(["retain", "prohibited", "unresolved"]), reason: text2 }).strict()).max(4e3),
+    ]), construction: reviewSpanSchema.nullable(), reason: text3 }).strict()).max(2e3),
+    referents: external_exports.array(external_exports.object({ id: external_exports.string(), verdict: external_exports.enum(["retain", "prohibited", "unresolved"]), reason: text3 }).strict()).max(4e3),
     sentences: external_exports.array(external_exports.object({
       id: external_exports.string(),
       mainClauseOrder: external_exports.enum(["SVO", "SV", "SVC", "OTHER", "UNRESOLVED"]),
       relativeClause: external_exports.enum(["clear", "prohibited", "unresolved"]),
       mentalFrame: external_exports.enum(["clear", "prohibited", "unresolved"]),
-      clauseSplice: external_exports.enum(["clear", "prohibited", "unresolved"]),
+      clauseConnection: external_exports.enum(["clear", "redundant", "forced", "unresolved"]),
       unnecessaryTail: external_exports.enum(["clear", "prohibited", "unresolved"]),
       triad: external_exports.enum(["clear", "prohibited", "unresolved"]),
       nominalClauses: external_exports.array(reviewSpanSchema).max(100),
       basicStatements: external_exports.array(reviewSpanSchema).max(100),
-      reason: text2
+      reason: text3
+    }).strict()).max(4e3),
+    sequences: external_exports.array(external_exports.object({
+      id: external_exports.string(),
+      informationGain: text3,
+      relation: text3,
+      judgment: external_exports.enum(["distinct-functions", "necessary-continuation", "repetitive-template", "unresolved"]),
+      reason: text3
     }).strict()).max(4e3)
   }).strict()
 }).strict();
@@ -25339,9 +25675,9 @@ function input(s) {
 function ruleInventory(s) {
   const ing = [], referents = [];
   const sentences3 = [];
-  if (!englishApplication(s)) return { ing, referents, sentences: sentences3 };
+  if (!englishApplication(s)) return { ing, referents, sentences: sentences3, pairs: [] };
   for (const block of s.document.blocks.filter((block2) => block2.kind === "body")) {
-    const span = (start, value2) => ({
+    const span2 = (start, value2) => ({
       blockId: block.id,
       start: Array.from(block.text.slice(0, start)).length,
       end: Array.from(block.text.slice(0, start + value2.length)).length,
@@ -25351,23 +25687,24 @@ function ruleInventory(s) {
       const value2 = segment.segment.trim();
       if (!value2 || !/[A-Za-z]/u.test(value2)) continue;
       const start = segment.index + segment.segment.indexOf(value2);
-      sentences3.push({ id: `s${sentences3.length + 1}`, span: span(start, value2) });
+      sentences3.push({ id: `s${sentences3.length + 1}`, span: span2(start, value2) });
     }
     for (const match of block.text.matchAll(/\b[A-Za-z]+ing\b/giu))
-      ing.push({ id: `ing${ing.length + 1}`, span: span(match.index, match[0]) });
+      ing.push({ id: `ing${ing.length + 1}`, span: span2(match.index, match[0]) });
     for (const match of block.text.matchAll(/\b(?:a|an|some(?:[ -]?(?:one|body|thing|where|time|times|day|place|how|what))?)\b/giu))
       referents.push({
         id: `ref${referents.length + 1}`,
         kind: /^(?:a|an)$/iu.test(match[0]) ? "article" : "some",
-        span: span(match.index, match[0])
+        span: span2(match.index, match[0])
       });
   }
-  return { ing, referents, sentences: sentences3 };
+  const pairs = sentences3.slice(1).map((to, i2) => ({ id: `pair${i2 + 1}`, from: sentences3[i2], to }));
+  return { ing, referents, sentences: sentences3, pairs };
 }
 function prepared(s) {
   const applicable = new Set(prepareWriting(input(s), s.policy).rules.map((rule) => rule.ruleId));
-  const cards = writingRuleCards(s.policy, applicable), inventory = ruleInventory(s);
-  return { cards, inventory, catalogHash: hashValue({ engine: RULE_REVIEW_ENGINE, cards, inventory }) };
+  const cards = writingRuleCards(s.policy, applicable), inventory = ruleInventory(s), expression = expressionInventory(s.document);
+  return { cards, inventory, expression, catalogHash: hashValue({ engine: RULE_REVIEW_ENGINE, cards, inventory, expression }) };
 }
 async function prepareRuleReview(policyRoot, path) {
   const s = await loadSession(policyRoot, path), p = prepared(s);
@@ -25378,12 +25715,16 @@ async function prepareRuleReview(policyRoot, path) {
     context: s.manifest.context,
     cards: p.cards,
     inventory: p.inventory,
+    expressionInventory: p.expression,
     instructions: [
       "Read the full current policy, prompt, original and preparation. Keep every applicable subrequirement; display units are not certified atomic obligations.",
       "Review process/source, syntax and content in separate passes. For each unit split every applicable obligation into details with its own state, reason and current evidence.",
       "Keep all check IDs and hashes. Empty evidence, missing details or unknown judgments are UNVERIFIED. N/A and exceptions require specific grounds; authorizations remain declarations for human review.",
       "Cover every inventory item exactly once in order, including cross-paragraph adjacent sentences. Suffix and article matches are candidates, not grammatical verdicts.",
-      "For each sentence inspect zero relatives, mental frames, finite-clause splices, unnecessary tails, triads, all nominal clauses and all basic statements. List exact spans, including omitted-that and nested clauses.",
+      "For each sentence inspect zero relatives, mental frames, the function of finite-clause connections, unnecessary tails, triads and all nominal clauses. List exact spans, including omitted-that and nested clauses. Basic statements are informational observations without a quota.",
+      "Review every supplied adjacent sentence pair across paragraphs for information gain and actual relation. Necessary plain statements, adjacent SVO and time/cause/condition clauses may stay. No 100-word quota, spacing rule or automatic SVO/finite-clause ban remains. Redundant or forced connections and repetitive templates require repair; other prohibitions remain.",
+      "Classify every to as an infinitive marker, preposition or another actual role. Review repeated helper/opportunity/purpose shells across the whole document. These are candidates without a numeric ban; useful purpose and complement relations may stay.",
+      "Compare each infinitive with the source. Do not mechanically turn ing into to, replace a finished action with an attempt/goal, or rotate synonyms to hide the same template. Repair the information organization or state the source gap.",
       "Progressive ing requires an exact containing construction and a source-supported present/past progressive judgment. Excluded lexical forms require a reason. A be prefix does not prove tense.",
       "Save records outside immutable version folders. Repair using the normal patch workflow, then prepare and re-review the complete current version.",
       "The tool verifies bindings, declared coverage, arithmetic and explicit failures. It does not certify truth, syntax classifications, exhaustive obligation decomposition, voice or formal approval."
@@ -25402,6 +25743,10 @@ async function prepareRuleReview(policyRoot, path) {
         authority: "",
         details: []
       })),
+      expression: {
+        to: p.expression.to.map((item) => ({ id: item.id, role: "unresolved", status: "unresolved", informationFunction: "", sourceComparison: "", reason: "" })),
+        patterns: p.expression.patterns.map((item) => ({ id: item.id, judgment: "unresolved", status: "unresolved", reason: "", operation: "unresolved" }))
+      },
       grammar: {
         ing: p.inventory.ing.map((item) => ({ id: item.id, classification: "unresolved", construction: null, reason: "" })),
         referents: p.inventory.referents.map((item) => ({ id: item.id, verdict: "unresolved", reason: "" })),
@@ -25410,13 +25755,14 @@ async function prepareRuleReview(policyRoot, path) {
           mainClauseOrder: "UNRESOLVED",
           relativeClause: "unresolved",
           mentalFrame: "unresolved",
-          clauseSplice: "unresolved",
+          clauseConnection: "unresolved",
           unnecessaryTail: "unresolved",
           triad: "unresolved",
           nominalClauses: [],
           basicStatements: [],
           reason: ""
-        }))
+        })),
+        sequences: p.inventory.pairs.map((pair) => ({ id: pair.id, informationGain: "", relation: "", judgment: "unresolved", reason: "" }))
       }
     },
     containsDocumentText: true,
@@ -25432,12 +25778,26 @@ async function reviewRules(policyRoot, path, raw) {
     if (hashValue(actual) !== hashValue(expected)) fail("rule-review-coverage", "Cover every expected item exactly once in order.");
   }
   exactIds(record2.checks.map((check2) => check2.checkId), p.cards.map((card) => card.checkId));
+  exactIds(record2.expression.to.map((item) => item.id), p.expression.to.map((item) => item.id));
+  exactIds(record2.expression.patterns.map((item) => item.id), p.expression.patterns.map((item) => item.id));
   exactIds(record2.grammar.ing.map((item) => item.id), p.inventory.ing.map((item) => item.id));
   exactIds(record2.grammar.referents.map((item) => item.id), p.inventory.referents.map((item) => item.id));
   exactIds(record2.grammar.sentences.map((item) => item.id), p.inventory.sentences.map((item) => item.id));
+  exactIds(record2.grammar.sequences.map((item) => item.id), p.inventory.pairs.map((item) => item.id));
   const blockers = [], pending = [];
   const block = (checkId, code) => blockers.push({ checkId, code });
   const wait = (checkId, code) => pending.push({ checkId, code });
+  for (const item of record2.expression.to) {
+    if (item.role === "unresolved" || item.status === "unresolved" || !item.informationFunction || !item.sourceComparison || !item.reason)
+      wait(item.id, "to-function-unverified");
+    if (item.status === "revise") block(item.id, "to-function-needs-rework");
+  }
+  for (const item of record2.expression.patterns) {
+    if (item.judgment === "unresolved" || item.status === "unresolved" || item.operation === "unresolved" || !item.reason)
+      wait(item.id, "expression-pattern-unverified");
+    if (item.judgment === "repetitive-template" || item.status === "revise" || item.operation !== "retain" && item.operation !== "unresolved")
+      block(item.id, "expression-pattern-needs-rework");
+  }
   function checkDecision(item, id2) {
     for (const anchor of item.evidence) {
       if (anchor.kind === "process") {
@@ -25461,7 +25821,7 @@ async function reviewRules(policyRoot, path, raw) {
     }
   });
   const wordCount = countText(s.document.blocks.filter((b) => b.kind === "body").map((b) => b.text).join("\n\n")).englishWords;
-  const limits = { ing: Math.floor(wordCount / 150), nominalClauses: Math.floor(wordCount / 150), basicStatements: Math.floor(wordCount / 100) };
+  const limits = { ing: Math.floor(wordCount / 150), nominalClauses: Math.floor(wordCount / 150), basicStatements: null };
   let allowedIng = 0;
   record2.grammar.ing.forEach((item, index) => {
     const candidate = p.inventory.ing[index];
@@ -25492,11 +25852,12 @@ async function reviewRules(policyRoot, path, raw) {
   record2.grammar.sentences.forEach((item, index) => {
     const sentence = p.inventory.sentences[index].span;
     if (!item.reason || item.mainClauseOrder === "UNRESOLVED") wait(item.id, "sentence-unverified");
-    if (index && item.mainClauseOrder === "SVO" && record2.grammar.sentences[index - 1].mainClauseOrder === "SVO") block(item.id, "adjacent-svo");
-    for (const key of ["relativeClause", "mentalFrame", "clauseSplice", "unnecessaryTail", "triad"]) {
+    for (const key of ["relativeClause", "mentalFrame", "unnecessaryTail", "triad"]) {
       if (item[key] === "unresolved") wait(item.id, `${key}-unverified`);
       if (item[key] === "prohibited") block(item.id, `${key}-prohibited`);
     }
+    if (item.clauseConnection === "unresolved") wait(item.id, "clause-connection-unverified");
+    if (item.clauseConnection === "redundant" || item.clauseConnection === "forced") block(item.id, "clause-connection-needs-rework");
     for (const [kind, spans2] of [["nominal", item.nominalClauses], ["basic", item.basicStatements]]) {
       let previous = -1;
       for (const anchor of spans2) {
@@ -25517,8 +25878,10 @@ async function reviewRules(policyRoot, path, raw) {
   });
   if (allowedIng > limits.ing) block("R02", "ing-limit");
   if (nominalCount > limits.nominalClauses) block("R02", "nominal-clause-limit");
-  if (basic.length > limits.basicStatements) block("R02", "basic-statement-limit");
-  for (let i2 = 1; i2 < basic.length; i2++) if (basic[i2].word - basic[i2 - 1].word < 100) block("R02", "basic-statement-spacing");
+  for (const pair of record2.grammar.sequences) {
+    if (!pair.informationGain || !pair.relation || !pair.reason || pair.judgment === "unresolved") wait(pair.id, "sentence-pair-unverified");
+    if (pair.judgment === "repetitive-template") block(pair.id, "sentence-pair-repetitive");
+  }
   const audit = auditText(input(s), s.policy);
   const visibleErrors = audit.findings.filter((finding) => finding.severity === "error");
   for (const finding of visibleErrors) block(finding.ruleId, finding.code);
@@ -25539,6 +25902,8 @@ async function reviewRules(policyRoot, path, raw) {
     findingsTruncated: audit.findingsTruncated,
     metrics: { wordCount, allowedIng, nominalClauses: nominalCount, basicStatements: basic.length },
     limits,
+    expressionMetrics: p.expression.metrics,
+    infinitivesDeclared: record2.expression.to.filter((item) => item.role === "infinitive").length,
     execution: record2.execution,
     coverageVerified: true,
     classificationSource: "reviewer-declared",
@@ -25556,8 +25921,8 @@ init_zod();
 init_dist();
 init_sessions();
 init_files();
-var WRITING_WORKFLOW_VERSION = "writing-workflow@1";
-var reviewNames = ["rules", "source", "answer", "style", "linguistic", "discourse"];
+var WRITING_WORKFLOW_VERSION = "writing-workflow@2";
+var reviewNames = ["rules", "source", "answer", "style", "linguistic", "discourse", "logic"];
 var writingWorkflowSchema = external_exports.object({
   schemaVersion: external_exports.literal(WRITING_WORKFLOW_VERSION),
   bindings: reviewBindingsSchema,
@@ -25567,7 +25932,8 @@ var writingWorkflowSchema = external_exports.object({
     answer: external_exports.unknown().nullable(),
     style: external_exports.unknown().nullable(),
     linguistic: external_exports.unknown().nullable(),
-    discourse: external_exports.unknown().nullable()
+    discourse: external_exports.unknown().nullable(),
+    logic: external_exports.unknown().nullable()
   }).strict(),
   evidence: external_exports.unknown().nullable()
 }).strict();
@@ -25578,18 +25944,18 @@ async function prepareWritingWorkflow(policyRoot, path) {
     bindings: reviewBindings(s),
     stages: [
       { id: "task", instruction: "Read the prompt, original, complete current policy and task-specific preparation." },
-      { id: "diagnose", commands: ["prepare-answer-review", "prepare-source-review"], instruction: "Diagnose before editing. Preserve source facts and author voice." },
+      { id: "diagnose", commands: ["prepare-logic-review", "prepare-answer-review", "prepare-source-review"], instruction: "Read the actual question, diagnose the answer and missing premises before editing. Preserve source facts and author voice." },
       { id: "edit", commands: ["prepare", "revise"], instruction: "Apply exact, justified patches. Keep the original and completed versions unchanged." },
       { id: "syntax", commands: ["prepare-rule-review", "review-rules"], instruction: "Cover each unit and all grammar inventory items. Declare missing evidence instead of manufacturing it." },
-      { id: "content", commands: ["review-source", "review-answer", "review-style", "review-linguistic", "review-discourse"], instruction: "Use the existing prepare commands and validate current records. Keep every explicit local failure." },
+      { id: "content", commands: ["review-source", "review-answer", "review-style", "review-linguistic", "review-discourse", "review-logic"], instruction: "Use the prepare commands and validate current records. Review all prompt requirements, paragraphs and bridges. Keep every explicit local failure." },
       { id: "repair", instruction: "Repair with a new patch and regenerate records for the complete current version. If repairs stall, report exact blockers; do not weaken rules or invent material." },
-      { id: "check", commands: ["check-workflow"], instruction: "Assemble the six full review input records into this template, not their output summaries. Ready means ready for human review only." }
+      { id: "check", commands: ["check-workflow"], instruction: "Assemble all seven full review input records into this template, not their output summaries. Old workflow records without logic remain incomplete. Ready means ready for human review only." }
     ],
     ruleReview: rules,
     template: {
       schemaVersion: WRITING_WORKFLOW_VERSION,
       bindings: reviewBindings(s),
-      reviews: { rules: null, source: null, answer: null, style: null, linguistic: null, discourse: null },
+      reviews: { rules: null, source: null, answer: null, style: null, linguistic: null, discourse: null, logic: null },
       evidence: null
     },
     containsDocumentText: true,
@@ -25598,6 +25964,8 @@ async function prepareWritingWorkflow(policyRoot, path) {
   };
 }
 async function checkWritingWorkflow(policyRoot, path, raw) {
+  if (raw && typeof raw === "object" && "schemaVersion" in raw && raw.schemaVersion === "writing-workflow@1")
+    fail("writing-workflow-upgrade-required", "Keep the historical record. Prepare a new workflow with the mandatory logic review.");
   const s = await loadSession(policyRoot, path), record2 = writingWorkflowSchema.parse(raw);
   if (hashValue(record2.bindings) !== hashValue(reviewBindings(s)))
     fail("writing-workflow-stale", "Prepare for the current original, version, task and policy.");
@@ -25608,7 +25976,8 @@ async function checkWritingWorkflow(policyRoot, path, raw) {
     answer: (value2) => reviewAnswer(policyRoot, path, value2),
     style: (value2) => reviewStyle(policyRoot, path, value2, evidence2),
     linguistic: (value2) => reviewLinguistic(policyRoot, path, value2, evidence2),
-    discourse: (value2) => reviewDiscourse(policyRoot, path, value2)
+    discourse: (value2) => reviewDiscourse(policyRoot, path, value2),
+    logic: (value2) => reviewLogic(policyRoot, path, value2)
   };
   const summaries = [];
   for (const name of reviewNames) {
@@ -25650,7 +26019,7 @@ async function checkWritingWorkflow(policyRoot, path, raw) {
 
 // packages/essay-writer/src/cli.ts
 var root = resolve5(dirname3(fileURLToPath(import.meta.url)), "..");
-var VERSION = "0.2.0-preview.1";
+var VERSION = "0.3.0-preview.1";
 var HELP = `Mantou Essay Writer ${VERSION}
 Local writing review and versioned edits. Uses your existing agent for writing.
 
@@ -25662,6 +26031,8 @@ node bin/essay.mjs revise --session "my essay" --patch-file edits.json
 node bin/essay.mjs status --session "my essay"
 node bin/essay.mjs audit --session "my essay"
 node bin/essay.mjs prepare-workflow --session "my essay"
+node bin/essay.mjs prepare-logic-review --session "my essay"
+node bin/essay.mjs review-logic --session "my essay" --review-file logic.json
 node bin/essay.mjs prepare-rule-review --session "my essay"
 node bin/essay.mjs review-rules --session "my essay" --review-file rules.json
 node bin/essay.mjs check-workflow --session "my essay" --review-file workflow.json
@@ -25721,6 +26092,8 @@ var allowed = {
   status: ["session"],
   revise: ["session", "patch-file"],
   recover: ["session"],
+  "prepare-logic-review": ["session"],
+  "review-logic": ["session", "review-file"],
   "prepare-rule-review": ["session"],
   "review-rules": ["session", "review-file"],
   "prepare-workflow": ["session"],
@@ -25780,7 +26153,7 @@ async function main() {
     return Number(value2);
   };
   let result;
-  if (command === "schema") result = { ...describeContracts(), ruleReview: external_exports.toJSONSchema(ruleReviewSchema), writingWorkflow: external_exports.toJSONSchema(writingWorkflowSchema), patch: external_exports.toJSONSchema(patchSchema), sourceReview: external_exports.toJSONSchema(sourceReviewSchema), answerReview: external_exports.toJSONSchema(answerReviewSchema), styleReview: external_exports.toJSONSchema(styleReviewSchema), styleEvidence: external_exports.toJSONSchema(styleEvidenceSchema), feedbackInterpretation: external_exports.toJSONSchema(feedbackInterpretationSchema), feedbackTrial: external_exports.toJSONSchema(feedbackTrialSchema), linguisticReview: external_exports.toJSONSchema(linguisticReviewSchema), discourseReview: external_exports.toJSONSchema(discourseReviewSchema), benchmarkProfile: external_exports.toJSONSchema(benchmarkProfileSchema), benchmarkReview: external_exports.toJSONSchema(benchmarkReviewSchema), assessmentReview: external_exports.toJSONSchema(commonAppAssessmentSchema), historicalAssessmentReview: external_exports.toJSONSchema(assessmentReviewSchema), sessionContext: external_exports.toJSONSchema(contextSchema) };
+  if (command === "schema") result = { ...describeContracts(), logicReview: external_exports.toJSONSchema(logicReviewSchema), ruleReview: external_exports.toJSONSchema(ruleReviewSchema), writingWorkflow: external_exports.toJSONSchema(writingWorkflowSchema), patch: external_exports.toJSONSchema(patchSchema), sourceReview: external_exports.toJSONSchema(sourceReviewSchema), answerReview: external_exports.toJSONSchema(answerReviewSchema), styleReview: external_exports.toJSONSchema(styleReviewSchema), styleEvidence: external_exports.toJSONSchema(styleEvidenceSchema), feedbackInterpretation: external_exports.toJSONSchema(feedbackInterpretationSchema), feedbackTrial: external_exports.toJSONSchema(feedbackTrialSchema), linguisticReview: external_exports.toJSONSchema(linguisticReviewSchema), discourseReview: external_exports.toJSONSchema(discourseReviewSchema), benchmarkProfile: external_exports.toJSONSchema(benchmarkProfileSchema), benchmarkReview: external_exports.toJSONSchema(benchmarkReviewSchema), assessmentReview: external_exports.toJSONSchema(commonAppAssessmentSchema), historicalAssessmentReview: external_exports.toJSONSchema(assessmentReviewSchema), sessionContext: external_exports.toJSONSchema(contextSchema) };
   else if (command === "benchmark") result = getCommonAppBenchmark();
   else if (command === "prepare-assessment-review") result = await prepareCurrentAssessmentReview(root, required2("session"), { essayType: required2("essay-type"), promptStatus: required2("prompt-status"), ...optional2("task") ? { task: required2("task") } : {} });
   else if (command === "review-assessment") result = await reviewCurrentAssessment(root, required2("session"), await readJson(required2("review-file")));
@@ -25872,6 +26245,8 @@ async function main() {
       await rm2(temp, { recursive: true, force: true });
     }
   } else if (command === "prepare") result = await prepareSession(root, required2("session"));
+  else if (command === "prepare-logic-review") result = await prepareLogicReview(root, required2("session"));
+  else if (command === "review-logic") result = await reviewLogic(root, required2("session"), await readJson(required2("review-file"), 8e6));
   else if (command === "prepare-rule-review") result = await prepareRuleReview(root, required2("session"));
   else if (command === "review-rules") result = await reviewRules(root, required2("session"), await readJson(required2("review-file"), 8e6));
   else if (command === "prepare-workflow") result = await prepareWritingWorkflow(root, required2("session"));

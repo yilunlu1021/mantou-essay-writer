@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0-preview.1
+
+- Add a complete prompt, paragraph, bridge and consequential-claim logic review, required by workflow v2. Explicit local failures cannot be overridden by adoption.
+- Inventory to locations and repeated helper/opportunity/purpose frames for contextual review; retain legitimate purposes without a new word quota.
+- Detect declared material logic gaps inconsistent with related Common App 4/5 ratings; leave contradictory totals empty, preserve declared arithmetic and unrelated ratings. The rubric remains v2.1.
+- Add a Chinese first-use guide, inbox/outbox routing and a native Trae alwaysApply entry. Host file and command access remain necessary; actual cross-model quality is unmeasured.
+- Upgrade the language policy to 1.22 with explicit authorization to replace the basic-statement quota, adjacent-SVO ban and blanket finite-clause connection ban with contextual review. Preserve all other prohibitions and historical records.
+
 ## 0.2.0-preview.1
 
 - Add executable rule cards, per-unit evidence and detail checks, and full ordered grammar candidate inventories for English and mixed-language application drafts.

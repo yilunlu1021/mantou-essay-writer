@@ -1,4 +1,8 @@
 node_modules/
+/inbox/*
+!/inbox/README.md
+/outbox/*
+!/outbox/README.md
 **/dist/
 .essay-work/
 my demo/

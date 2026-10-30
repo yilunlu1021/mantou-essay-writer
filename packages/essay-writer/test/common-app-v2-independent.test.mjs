@@ -155,7 +155,7 @@ for (const id of expectedCritical) for (const score of [0, 1, 2, 3]) test(`v2 in
 for (const id of ['causal-chain', 'action-evidence', 'first-read']) for (const status of ['needs-rework', 'unverified'])
   test(`v2 independent: ${id}/${status} blocks despite 100`, async () => {
     const record = fresh(); record.criticalChecks.find(x => x.id === id).status = status;
-    const result = await review(record); assert.equal(result.score.total, 100); assert.equal(result.studentReviewEligible, false); assert.ok(result.qualityBlockers.includes(`critical-check-${id}`));
+    const result = await review(record); assert.equal(result.score.total, status === 'needs-rework' ? null : 100); assert.equal(result.score.declaredTotal, 100); assert.equal(result.scoreConsistency.verified, status !== 'needs-rework'); assert.equal(result.studentReviewEligible, false); assert.ok(result.qualityBlockers.includes(`critical-check-${id}`));
   });
 test('v2 independent: critical check identity/order cannot be changed or duplicated', async () => {
   const record = fresh(); record.criticalChecks[1].id = record.criticalChecks[0].id; await rejects(record, 'assessment-critical-check');

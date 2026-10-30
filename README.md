@@ -2,13 +2,13 @@
 
 A local writing project for your existing coding agent. It prepares task-specific rules, preserves originals, validates edits, checks review records and exports versioned Word drafts. It supports Chinese, English and mixed text, with separate scopes for academic work, personal narratives, application explanations and advisor feedback.
 
-Preview 0.2 adds a rule-review ledger and a writing workflow. The agent writes and reviews in separate passes. The tool rejects missing or stale records, checks declared grammar inventories and aggregates six review inputs without granting submission approval. Start with the [workflow guide](WORKFLOW.md).
+Preview 0.3 adds a dedicated logic review, contextual checks for repeated infinitive frames, and a natural-language folder entry. Read [开始使用.md](开始使用.md): place a draft and its prompt in inbox/, open the folder in your agent, and ask for a review or edit. The tool aggregates seven current review inputs and leaves human adoption separate.
 
 This preview includes 55 policy groups. Mechanical findings are checked by code. Facts, reasoning, author voice and context-dependent language still need human review. The tool does not predict AI detector scores or approve an essay for submission.
 
 ## Start on Windows or macOS
 
-1. Download the release ZIP, or use GitHub **Code → Download ZIP**, and extract it.
+1. Download the runtime ZIP, or GitHub **Code → Download ZIP**, and extract it. Check for `bin/essay.mjs`; if it is absent, build that source checkout using CONTRIBUTING.md before running it.
 2. Install [Node.js 22 or 24 LTS](https://nodejs.org/en/download) if needed. Open a new terminal after installation.
 3. Open the extracted folder in Codex or another agent. Ask: **Read AGENTS.md, run doctor and the demo, then help me edit my document.**
 

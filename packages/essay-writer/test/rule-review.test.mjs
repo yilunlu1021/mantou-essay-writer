@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { declaredLogic } from './helpers/logic.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -6,7 +7,7 @@ import { join, resolve } from 'node:path';
 import { contextSchema } from '@mantou/text-quality';
 import { importSession, prepareRuleReview, reviewRules, prepareWritingWorkflow, checkWritingWorkflow,
   loadSession, patchTemplate, reviseSession, prepareSourceReview, prepareAnswerReview, prepareStyleReview,
-  prepareLinguisticReview, prepareDiscourseReview } from '../dist/index.js';
+  prepareLinguisticReview, prepareDiscourseReview, prepareLogicReview } from '../dist/index.js';
 
 const root = resolve('.');
 async function fixture(t, text = 'The door was blue.', genre = 'personal-narrative') {
@@ -25,7 +26,10 @@ function declarations(prep) {
   r.grammar.ing.forEach(i => { i.classification = 'excluded-word'; i.reason = 'Synthetic lexical classification, not certified by the program.'; });
   r.grammar.referents.forEach(i => { i.verdict = 'retain'; i.reason = 'Synthetic specific object declaration.'; });
   r.grammar.sentences.forEach(i => Object.assign(i, { mainClauseOrder: 'SVC', relativeClause: 'clear', mentalFrame: 'clear',
-    clauseSplice: 'clear', unnecessaryTail: 'clear', triad: 'clear', reason: 'Synthetic sentence-level declaration.' }));
+    clauseConnection: 'clear', unnecessaryTail: 'clear', triad: 'clear', reason: 'Synthetic sentence-level declaration.' }));
+  r.grammar.sequences.forEach(i => Object.assign(i,{informationGain:'A different source feature is stated.',relation:'The next source feature continues the scene.',judgment:'necessary-continuation',reason:'Distinct source information can use the same main-clause order.'}));
+  r.expression.to.forEach(i => Object.assign(i, {role:'preposition',status:'retain', informationFunction:'Synthetic relation.',sourceComparison:'The source relation remains.',reason:'Synthetic classification only.'}));
+  r.expression.patterns.forEach(i => Object.assign(i,{judgment:'distinct-functions',status:'retain',reason:'Synthetic different functions.',operation:'retain'}));
   return r;
 }
 test('preparation covers every applicable policy unit and starts unverified', async t => {
@@ -99,15 +103,26 @@ test('some series is blocked despite retain claims, articles require individual 
   r.grammar.referents[1].reason = '';
   assert.ok((await reviewRules(root, session, r)).pending.some(i => i.code === 'referent-unverified'));
 });
-test('cross-paragraph SVO, nominal counts, basic statement spacing and explicit syntax failures block', async t => {
+test('necessary adjacent SVO and basic statements can stay while nominal counts and remaining prohibitions block', async t => {
   const session = await fixture(t, 'I chose the cup.\n\nWe closed the door.'), p = await prepareRuleReview(root, session), r = declarations(p);
   r.grammar.sentences.forEach(s => s.mainClauseOrder = 'SVO');
-  let result = await reviewRules(root, session, r); assert.ok(result.blockers.some(b => b.code === 'adjacent-svo'));
+  let result = await reviewRules(root, session, r); assert.ok(!result.blockers.some(b => b.code === 'adjacent-svo')); assert.equal(result.limits.basicStatements,null);
   r.grammar.sentences[0].nominalClauses = [p.inventory.sentences[0].span];
   r.grammar.sentences.forEach((s, i) => s.basicStatements = [p.inventory.sentences[i].span]);
   r.grammar.sentences[0].relativeClause = 'prohibited'; result = await reviewRules(root, session, r);
-  for (const code of ['nominal-clause-limit', 'basic-statement-limit', 'basic-statement-spacing', 'relativeClause-prohibited'])
+  for (const code of ['nominal-clause-limit', 'relativeClause-prohibited'])
     assert.ok(result.blockers.some(b => b.code === code), code);
+  for (const code of ['adjacent-svo', 'basic-statement-limit', 'basic-statement-spacing']) assert.ok(!result.blockers.some(b => b.code === code));
+});
+test('source-supported finite cause and adjacent actions can stay; forced links, repetition and remaining bans cannot', async t => {
+  const session = await fixture(t, 'I closed the door because the rain soaked the floor.\n\nI checked the latch.'), p = await prepareRuleReview(root,session), base = declarations(p);
+  base.grammar.sentences.forEach((s,i) => Object.assign(s,{mainClauseOrder:'SVO',basicStatements:[p.inventory.sentences[i].span],clauseConnection:'clear'}));
+  assert.equal((await reviewRules(root,session,base)).reviewDecision,'recorded');
+  for(const mutate of [r=>r.grammar.sentences[0].clauseConnection='forced',r=>r.grammar.sequences[0].judgment='repetitive-template',
+    ...['relativeClause','mentalFrame','unnecessaryTail','triad'].map(key=>r=>r.grammar.sentences[0][key]='prohibited')]){
+    const r=structuredClone(base);mutate(r);assert.equal((await reviewRules(root,session,r)).reviewDecision,'needs-rework');
+  }
+  const missing=structuredClone(base);missing.grammar.sequences=[];await assert.rejects(reviewRules(root,session,missing),{code:'rule-review-coverage'});
 });
 test('mechanical errors cannot be hidden with a complete PASS ledger', async t => {
   const session = await fixture(t, 'The door was blue; the wall was red.', 'academic'), p = await prepareRuleReview(root, session);
@@ -127,7 +142,7 @@ test('workflow requires all raw reviews, rejects summaries and stale results, ne
   assert.deepEqual(await readFile(join(session, 'versions/v0000/audit.json')), audit);
 });
 
-test('six actual review contracts reach human-review state; local rework cannot be overridden', async t => {
+test('seven actual review contracts reach human-review state; local rework cannot be overridden', async t => {
   const session = await fixture(t, 'The door was blue.', 'academic');
   const workflow = (await prepareWritingWorkflow(root, session)).template;
   workflow.reviews.rules = declarations(await prepareRuleReview(root, session));
@@ -176,6 +191,7 @@ test('six actual review contracts reach human-review state; local rework cannot 
     alternativeOrderReason: 'One paragraph has no distinct permutation.', sourceLimit: 'No further event sequence is supplied.',
     choice: 'retain', decision: 'retain', reason: 'The single description is retained.' });
   discourse.recommendation = 'adopt'; workflow.reviews.discourse = discourse;
+  workflow.reviews.logic = declaredLogic(await prepareLogicReview(root, session));
   const result = await checkWritingWorkflow(root, session, workflow);
   assert.equal(result.workflowStatus, 'ready-for-human-review'); assert.equal(result.recordsComplete, true);
   assert.equal(result.deliveryAuthorized, false); assert.equal(result.factsCertified, false);

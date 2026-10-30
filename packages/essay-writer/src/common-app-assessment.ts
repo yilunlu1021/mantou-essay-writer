@@ -8,6 +8,7 @@ import { reviewBindings, reviewNoteSchema as note, reviewSpanSchema, validateRev
 import { benchmarkProfileSchema } from './benchmark-review.js';
 import { prepareAssessmentReview, reviewAssessment } from './assessment-review.js';
 import { logicalParagraphAnchors } from './style-review.js';
+import { logicScoreConsistency } from './logic-score-consistency.js';
 
 export const COMMON_APP_ASSESSMENT_VERSION = 'judgment-evidence-assessment@3' as const;
 export const COMMON_APP_RUBRIC_VERSION = 'judgment-evidence-95plus5-2.1' as const;
@@ -100,7 +101,9 @@ export async function prepareCommonAppAssessment(policyRoot: string, path: strin
   if (profile.promptStatus === 'supplied' && !s.manifest.context.prompt.trim()) fail('assessment-prompt', 'Supply the actual prompt or mark it missing/unselected.');
   return { schemaVersion: COMMON_APP_ASSESSMENT_VERSION, rubricVersion: rubric.version, rubricHash: rubric.rubricHash,
     bindings: reviewBindings(s), rubric, context: s.manifest.context, document: s.document, original: s.original,
-    instructions: rubric.instructions,
+    instructions: [...rubric.instructions,
+      'Before rating, review whether the text makes sense, convinces and answers every actual prompt requirement. Use prepare-logic-review and review-logic for a complete writing workflow.',
+      'A material logic gap requires a material issue attributed to the affected criterion. That criterion cannot receive 4 or 5. Keep unrelated strengths and optional improvements separate; unknown evidence remains unrated. Contradictory declarations invalidate the total without automatically changing ratings.'],
     template: { schemaVersion: COMMON_APP_ASSESSMENT_VERSION, rubricVersion: rubric.version, rubricHash: rubric.rubricHash,
       bindings: reviewBindings(s), profile: { essayType: 'common-app', promptStatus: profile.promptStatus },
       reviewer: { id: '', role: 'agent', participatedInEditing: false }, reading: { task: '', personUnderstood: '', causalChain: '', keyActions: '', questions: [], evidenceLimits: '', presentationVsContent: '', anchors: [] },
@@ -172,7 +175,9 @@ export async function reviewCommonAppAssessment(policyRoot: string, path: string
     fail('assessment-readiness', 'A clear length/mechanics check requires 635–650 words and no mechanical blocker.');
   const sum = (items: typeof r.items) => items.some(item => item.score === null) ? null : items.reduce((total, item) => total + item.score!, 0);
   const base = sum(r.items.slice(0, 19)), bonusRaw = bonus.score, bonusCounted = bonusRaw;
-  const total = base === null || bonusCounted === null ? null : Math.min(rubric.totalMax, base + bonusCounted);
+  const declaredTotal = base === null || bonusCounted === null ? null : Math.min(rubric.totalMax, base + bonusCounted);
+  const scoreConsistency = logicScoreConsistency(r);
+  const total = scoreConsistency.verified ? declaredTotal : null;
   const groups = Object.fromEntries(['P1', 'C2', 'E3', 'N4', 'V5', 'X6'].map(group => [group, sum(r.items.filter(item => item.id.startsWith(group + '.')))]));
   const effectiveTarget = Math.max(COMMON_APP_QUALITY_FLOOR, r.target.minimumScore100 ?? COMMON_APP_QUALITY_FLOOR);
   const targetMet = total !== null && total >= effectiveTarget;
@@ -181,6 +186,7 @@ export async function reviewCommonAppAssessment(policyRoot: string, path: string
   const unaccepted = r.issues.filter(issue => !accepted.has(issue.id));
   const criticalFailures = COMMON_APP_CRITICAL_ITEMS.filter(id => byId.get(id)!.score === null || byId.get(id)!.score! < 4);
   const qualityBlockers = [
+    ...scoreConsistency.conflicts.map(c => `score-conflict-${c.id}`),
     ...(diagnosis.verdict !== 'sufficient' ? ['story-selection-not-sufficient'] : []),
     ...(diagnosis.development.status !== 'supported' ? ['story-development-not-supported'] : []),
     ...diagnosis.paragraphProgression.flatMap((p, index) => ['repeats', 'unresolved'].includes(p.status) ? [`story-paragraph-${index + 1}-${p.status}`] : []),
@@ -198,7 +204,7 @@ export async function reviewCommonAppAssessment(policyRoot: string, path: string
   const contentAccepted = qualityPassed && targetMet && r.acceptance.decision === 'accepted' && !material.length && !unaccepted.length && !r.readiness.some(check => check.status === 'issue');
   const targetConfirmed = r.target.school?.status === 'confirmed';
   return { schemaVersion: COMMON_APP_ASSESSMENT_VERSION, rubricVersion: rubric.version, rubricHash: rubric.rubricHash,
-    bindings: r.bindings, recordHash: hashValue(r), score: { base, bonusRaw, bonusCounted, total, groups,
+    bindings: r.bindings, recordHash: hashValue(r), scoreConsistency, score: { base, bonusRaw, bonusCounted, total, declaredTotal, groups,
       assessedItems: r.items.filter(item => item.score !== null).length, unratedItems: r.items.filter(item => item.score === null).map(item => item.id) },
     editorialStatus: contentAccepted ? 'content-accepted' : qualityPassed ? 'quality-qualified' : 'rework',
     submissionStatus: contentAccepted && !pendingReadiness.length && targetConfirmed ? 'ready-for-human-submission' : 'blocked',

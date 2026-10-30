@@ -16,4 +16,7 @@ export * from './common-app-assessment.js';
 export * from './rule-cards.js';
 export * from './rule-review.js';
 export * from './writing-workflow.js';
+export * from './logic-review.js';
+export * from './expression-inventory.js';
+export * from './logic-score-consistency.js';
 export { UserError } from './files.js';

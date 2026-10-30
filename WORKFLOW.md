@@ -14,16 +14,18 @@
 
 1. 按README的import导入原稿，固定题目、语言、体裁、长度及修改范围。
 2. 运行prepare-workflow，读取步骤和ruleReview里的全部适用规则卡、候选及未核模板。
-3. 先诊断整篇与来源，再用原有prepare/revise提交准确补丁。每次修改都生成新版本。
+3. 先用prepare-logic-review诊断题目、逐段贡献、相邻桥梁及有分量的主张，再检查来源，再用原有prepare/revise提交准确补丁。每次修改都生成新版本。
 4. 针对当前全文完成规则复核，分别检查过程/来源、句法及内容。一个编号单元含多个义务时，details须分别记录。不能用总PASS代替子项。
-5. 用原有prepare-source/answer/style/linguistic/discourse-review生成模板，完成后分别运行对应review命令。
-6. 把六份完整复核输入装入工作流模板的reviews字段。使用原始记录，不能填命令返回的摘要。没有外部参考/检测证据时evidence保持null。
+5. 用原有prepare-source/answer/style/linguistic/discourse/logic-review生成模板，完成后分别运行对应review命令。
+6. 把七份完整复核输入装入工作流模板的reviews字段。使用原始记录，不能填命令返回的摘要。没有外部参考/检测证据时evidence保持null。
 7. 运行check-workflow。待返修项通过新的补丁处理，正文改变后重新生成当前版本的全部记录。反复修复仍无法解决时，保留具体失败和来源缺口。
 
 命令示例，路径按本次实际文件替换：
 
 ```sh
 node bin/essay.mjs prepare-workflow --session "my essay"
+node bin/essay.mjs prepare-logic-review --session "my essay"
+node bin/essay.mjs review-logic --session "my essay" --review-file "logic.json"
 node bin/essay.mjs prepare-rule-review --session "my essay"
 node bin/essay.mjs review-rules --session "my essay" --review-file "rules.json"
 node bin/essay.mjs check-workflow --session "my essay" --review-file "workflow.json"
@@ -35,7 +37,7 @@ node bin/essay.mjs check-workflow --session "my essay" --review-file "workflow.j
 
 每个适用核对单元保留checkId和requirementHash，填写status、reason、evidence、authority及details。状态为PASS、FAIL、UNVERIFIED、NOT_APPLICABLE或EXEMPT。证据引用当前正文、原稿的精确Unicode codepoint范围，或说明实际过程。N/A须说明适用条件，例外须给明确依据。缺证据、缺子项或空理由保持未核。程序不认证N/A、例外和自由文本理由的真实性，也不证明所有原子义务已拆全。
 
-英文及混合语言的学生申请文书另外覆盖整篇句子、ing后缀、some系列和a/an候选。后缀命中不代表禁用词。逐处判断真实进行时、词形排除或禁止用途，每句列出名词性从句和基本陈述的准确范围。程序按声明核对两个150词上限、100词数量与间距、跨段相邻SVO，以及明确标出的禁止结构。不能用be前缀冒充时体判断，也不能靠不列从句/基本陈述隐去实际结构。
+英文及混合语言的学生申请文书另外覆盖整篇句子、ing后缀、some系列和a/an候选。后缀命中不代表禁用词。逐处判断真实进行时、词形排除或禁止用途，每句列出名词性从句和基本陈述的准确范围。程序按声明核对两个150词上限及明确标出的剩余禁止结构；全部相邻句对按新增信息和真实关系留证，不设基本陈述配额/间距或相邻SVO零禁。不能用be前缀冒充时体判断，也不能靠不列名词性从句隐去实际结构。
 
 execution中的供应商、模型及设置只记录确实可见的信息。未知保持null，程序不验证后台身份。分轮审阅由agent执行，工具本身不调用模型。
 
@@ -45,10 +47,18 @@ execution中的供应商、模型及设置只记录确实可见的信息。未�
 | --- | --- |
 | needs-rework | 机器错误或某份记录存在明确待改，保留问题并返修。退出码2。 |
 | needs-review | 缺记录、缺证据、未解判断或结果截断，继续复核。退出码3。 |
-| ready-for-human-review | 六类记录已验证且无已知阻塞，交本人/顾问通读。退出码仍为3。 |
+| ready-for-human-review | 七类记录已验证且无已知阻塞，交本人/顾问通读。退出码仍为3。 |
 
 deliveryAuthorized始终false。现有status/audit继续报告其机械与人工待核状态，check-workflow单独汇总复核。原有working-draft.docx仍可用于内部审阅，不能凭文件已生成称合规或正式采用。正式评分、本人确认与提交独立执行。
 
 ## 怎样验证改进
 
 运行pnpm check会检查合成反例、记录缺项、错误总数、过期绑定及导出首跑。它验证工程合同，不证明实际模型遵守率。对比指令或模型时固定材料、题目和设置，保留真实模型信息与失败，分别比较共有规则、新增规则、事实/声音及盲评偏好。未运行的模型实验保持未测。
+
+## 句式及逻辑
+
+规则复核另列每个to及重复外壳候选，按介词/不定式等功能对照原稿并说明新增信息，不设to限额。已完成行动不能被机会、尝试或目标外壳替换。必要目的和补足可保留。2026-10-30明确授权的三项调整已生效：必要直述和时间/因果/条件从句可留，全部相邻句对仍须核对信息作用与实际重复。其他禁令不变。
+
+逻辑记录完整覆盖真实题目、全部段落和相邻桥梁；重要主张区分观察/感受/推论/计划，记录依据、理由、反读及边界，分别判makesSense、convincing、answersPrompt。局部缺口不会被adopt覆盖。程序不能认证是否发现全部主张或自由文本理由真假。Common App评分中，明确material逻辑issue与对应4/5分冲突时正式total留空，原始声明算术留在declaredTotal，不自动改分、不压低无关强项。
+
+writing-workflow@1与writing-rule-review@1是历史合同；新版需重新prepare，不能把旧ready直接当作已完成新增逻辑审核。政策变化后的旧会话请用对应历史发行包只读重放，或从旧稿建立新会话，不改写旧policyHash。

@@ -1,5 +1,5 @@
 {
-  "name":"mantou-essay-writer","version":"0.2.0-preview.1","private":true,"type":"module","license":"MIT",
+  "name":"mantou-essay-writer","version":"0.3.0-preview.1","private":true,"type":"module","license":"MIT",
   "description":"Local policy-guided writing review and versioned editing for your existing agent",
   "engines":{"node":">=22 <25"},"packageManager":"pnpm@10.14.0",
   "exports":{".":"./bin/sdk.mjs"},"bin":{"mantou-essay":"./bin/essay.mjs"},
