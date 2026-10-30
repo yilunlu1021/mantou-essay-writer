@@ -1,5 +1,10 @@
 # Changelog
 
+## Production agent activation
+
+- Add an explicit production agent mode with the existing company login, preserved legacy jobs and additive student tables. Keep preview isolation separate; production refuses preview data and requires an explicit runtime before Store starts.
+- Validate pinned Harness packages and runtime assets at startup, bound child memory and default agent job concurrency to one. A research-off fallback retains student ACL and the usage ledger. The writing policy stays at the existing 1.22 release.
+
 ## 2026-10-30 完成结果展示修复
 
 - 分开任务完成与审核状态，直接展示本次正文、复制和下载；完成停止转圈，切任务默认正文并丢弃旧轮询回包。保留待修改/未核和未完成审核提示，空正文、已停止、研究或仅审阅不伪称新稿。稳定站三静态热修另见PR #3；本分支同步展示行为，研究功能仍未部署。

@@ -23,8 +23,9 @@ const messages={'provider-not-configured':'请管理员先配置所选模型的�
   'model-output-truncated':'模型输出被截断，本轮已保留用量记录。','model-output-incomplete':'模型服务未完成本次输出，本轮已停止。','model-invalid-json':'模型未返回有效的检查记录，本轮已保留待核状态。',
   'docx-structure':'文档含无法可靠自动读取的结构，请提供清洁正文DOCX或粘贴文字。'};
 const safeError=e=>messages[e?.code??e?.message]??(e?.issues?'输入格式或长度不符合要求。':'本次操作未完成，请检查输入或联系管理员。');
-export async function createWorkbench({dataDir,origin='http://127.0.0.1:8787',policyRoot,publicDir,bootstrapPassword,modelCall,maxCost=10,concurrency=2,enableStudentLibrary=false,researchRunner,sessionCookieName='essay_session'}={}){
+export async function createWorkbench({dataDir,origin='http://127.0.0.1:8787',policyRoot,publicDir,bootstrapPassword,modelCall,maxCost=10,concurrency=2,enableStudentLibrary=false,researchRunner,sessionCookieName='essay_session',environment=enableStudentLibrary?'research-preview':'stable'}={}){
   origin=new URL(origin).origin;if(!/^[a-z_]{1,40}$/.test(sessionCookieName))throw new Error('invalid-cookie-name');
+  if(!['stable','research-preview','agent'].includes(environment))throw new Error('invalid-environment');
   const base=dirname(fileURLToPath(import.meta.url));dataDir=resolve(dataDir??join(base,'../runtime-data'));policyRoot??=base;publicDir??=join(base,'public');
   await mkdir(dataDir,{recursive:true,mode:0o700});const store=new Store(dataDir,{bootstrapPassword}),library=enableStudentLibrary?new StudentLibrary(store):null,invokeModel=limitModelCalls(modelCall??callModel,2),pipeline=new Pipeline({store,policyRoot,dataRoot:dataDir,maxCost,modelCall:invokeModel,researchRunner});
   if(library)store.authorizeJob=(actorId,row)=>library.jobAllowed(actorId,row);
@@ -52,7 +53,7 @@ export async function createWorkbench({dataDir,origin='http://127.0.0.1:8787',po
       if(path.startsWith('/api/')&&req.method!=='GET'&&req.headers.origin!==origin)return send(403,{error:'origin-rejected',message:'请从本网站提交操作。'});
       if(path.startsWith('/api/')&&path!=='/api/login'&&req.method!=='GET'&&user&&req.headers['x-essay-actor']&&req.headers['x-essay-actor']!==user.id)return send(409,{error:'account-changed',message:'登录账号已变化，请重新进入工作台。'});
       const body=async()=>{const chunks=[];let n=0;for await(const chunk of req){n+=chunk.length;if(n>MAX_BYTES)throw new Error('request-too-large');chunks.push(chunk);}const data=Buffer.concat(chunks);try{return JSON.parse(data.toString('utf8'));}catch{throw new Error('invalid-json');}};
-      if(path==='/api/session'&&req.method==='GET')return send(200,{user,providers:store.providerStatus().map(p=>({...p,label:PROVIDERS[p.id].label})),policyVersion:(await pipeline.policyPromise).version,limits:{formats:['.docx','.txt','.md']},features:{studentLibrary:!!library,research:!!researchRunner},environment:library?'research-preview':'stable'});
+      if(path==='/api/session'&&req.method==='GET')return send(200,{user,providers:store.providerStatus().map(p=>({...p,label:PROVIDERS[p.id].label})),policyVersion:(await pipeline.policyPromise).version,limits:{formats:['.docx','.txt','.md']},features:{studentLibrary:!!library,research:!!researchRunner},environment});
       if(path==='/api/login'&&req.method==='POST'){
         const input=await body();if(typeof input.username!=='string'||typeof input.password!=='string'||input.username.length>60||input.password.length>200)return send(400,{error:'invalid-login'});
         const peer=req.socket.remoteAddress??'unknown',forwarded=req.headers['x-real-ip'],client=(['127.0.0.1','::1','::ffff:127.0.0.1'].includes(peer)&&typeof forwarded==='string'&&/^[a-f0-9:.]{1,60}$/i.test(forwarded))?forwarded:peer;

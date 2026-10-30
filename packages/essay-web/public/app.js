@@ -13,7 +13,7 @@ async function loadSession(){const d=await api('/api/session');if(!d.user){showL
   for(const option of $('model').options){if(option.value==='compare')option.disabled=!d.providers.every(x=>x.configured);else option.disabled=!d.providers.find(x=>x.id===option.value)?.configured;}
   $('submit-btn').disabled=!d.providers.some(x=>x.configured);
   if(!d.providers.some(x=>x.configured))notice('模型尚未配置。管理员可在设置中填写两家的标准API密钥。');else notice('');
-  for(const badge of document.querySelectorAll('.preview-badge'))badge.textContent=d.features?.studentLibrary?'研究测试版':'内测';
+  for(const badge of document.querySelectorAll('.preview-badge'))badge.textContent=d.environment==='agent'?'研究版':d.features?.studentLibrary?'研究测试版':'内测';
   document.querySelector('[data-research-mode]').hidden=!d.features?.research;
   await studentUi.load();
   const allowed=[...$('model').options].find(x=>!x.disabled);if(allowed&&$('model').selectedOptions[0].disabled)$('model').value=allowed.value;
