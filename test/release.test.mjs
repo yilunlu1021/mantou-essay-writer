@@ -10,15 +10,30 @@ function run(root,args,expected=0){const r=spawnSync(process.execPath,[join(root
 test('release ZIP: Node-only first use, Chinese paths, DOCX, BOM patch and rejection',async t=>{
   const temp=await mkdtemp(join(tmpdir(),'essay 发行 '));t.after(()=>rm(temp,{recursive:true,force:true}));
   const staging=join(temp,'pack');await mkdir(staging);
-  for(const file of ['bin','policy','README.md','AGENTS.md','LICENSE','THIRD_PARTY_NOTICES.txt','start.ps1','start.sh'])await cp(join(source,file),join(staging,file),{recursive:true});
+  for(const file of ['bin','policy','.gitignore','README.md','AGENTS.md','LICENSE','THIRD_PARTY_NOTICES.txt','start.ps1','start.sh','开始使用.md','WORKFLOW.md','.trae','inbox','outbox'])await cp(join(source,file),join(staging,file),{recursive:true});
   const items={};async function walk(dir,prefix=''){for(const e of await readdir(dir,{withFileTypes:true})){if(e.isDirectory())await walk(join(dir,e.name),prefix+e.name+'/');else items[prefix+e.name]=await readFile(join(dir,e.name));}}await walk(staging);
   const zip=zipSync(items);const unpack=join(temp,'解压 release');await mkdir(unpack);
   for(const [name,data] of Object.entries(unzipSync(zip))){const path=join(unpack,name);await mkdir(dirname(path),{recursive:true});await writeFile(path,data);}
   assert.equal(JSON.parse(run(unpack,['doctor']).stdout).policyGroups,55);
+  assert.match(await readFile(join(unpack,'.trae/rules/mantou.md'),'utf8'),/alwaysApply: true/);
+  assert.match(await readFile(join(unpack,'.gitignore'),'utf8'),/inbox/);
+  assert.match(await readFile(join(unpack,'AGENTS.md'),'utf8'),/Natural-language entry/);
+  assert.match(await readFile(join(unpack,'开始使用.md'),'utf8'),/inbox/);
   assert.match(run(unpack,['--help']).stdout,/Import options/);assert.match(run(unpack,['--version']).stdout,/preview/);
   assert.ok(JSON.parse(run(unpack,['schema']).stdout).patch);assert.ok(JSON.parse(run(unpack,['example']).stdout).patchExample);
   const demo=JSON.parse(run(unpack,['demo','--out','演示 case']).stdout);assert.equal(demo.version,'v0001');assert.equal(demo.deliveryAuthorized,false);
   assert.equal(JSON.parse(run(unpack,['status','--session','演示 case'],3).stdout).qualityDecision,'needs-review');
+  const workflow=JSON.parse(run(unpack,['prepare-workflow','--session','演示 case']).stdout);
+  assert.equal(workflow.schemaVersion,'writing-workflow@2');assert.equal(workflow.template.reviews.logic,null);
+  const logic=JSON.parse(run(unpack,['prepare-logic-review','--session','演示 case']).stdout);
+  await writeFile(join(unpack,'logic.json'),JSON.stringify(logic.template));
+  assert.equal(JSON.parse(run(unpack,['review-logic','--session','演示 case','--review-file','logic.json'],3).stdout).reviewDecision,'needs-rework');
+  assert.ok(workflow.ruleReview.cards.length>100);assert.equal(workflow.deliveryAuthorized,false);
+  await writeFile(join(unpack,'workflow.json'),JSON.stringify(workflow.template));
+  const pending=JSON.parse(run(unpack,['check-workflow','--session','演示 case','--review-file','workflow.json'],3).stdout);
+  assert.equal(pending.workflowStatus,'needs-review');assert.equal(pending.recordsComplete,false);
+  await writeFile(join(unpack,'rules.json'),JSON.stringify(workflow.ruleReview.template));
+  assert.equal(JSON.parse(run(unpack,['review-rules','--session','演示 case','--review-file','rules.json'],3).stdout).reviewDecision,'needs-review');
   run(unpack,['import','--input','演示 case/versions/v0001/working-draft.docx','--out','word roundtrip','--language','en','--genre','academic'],3);
   const policyPath=join(unpack,'policy/language-standards.md');await writeFile(policyPath,(await readFile(policyPath,'utf8')).replaceAll('\n','\r\n'));run(unpack,['doctor']);
   await writeFile(join(unpack,'draft.txt'),'\uFEFFi tested the wheel.\r\n\r\nThe cart rolled.');

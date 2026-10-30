@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const CONTRACT_VERSION = "1.0.0";
-export const ENGINE_VERSION = "0.2.0";
+export const ENGINE_VERSION = "0.2.1";
 export const MAX_REQUEST_BYTES = 1_000_000;
 const id = z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,119}$/);
 const sha = z.string().regex(/^[a-f0-9]{64}$/);
@@ -56,7 +56,7 @@ export const ruleSchema = z.object({
   source: z.string().min(1).max(300),
   requirement: z.string().min(1).max(2500),
   scope: z.enum(["all", "student", "advisor", "advisor-comment", "narrative", "english-narrative", "material", "early-wechat-feedback", "clean-draft"]),
-  check: z.enum(["manual", "punctuation", "english-terms", "adverbs", "chinese-terms", "contrast",
+  check: z.enum(["manual", "punctuation", "english-terms", "adverbs", "chinese-terms", "contrast", "sentence-patterns",
     "defensive", "fillers", "rhythm-length", "rhythm-opening", "narrative-ending", "editorial-slots"]),
   manualRequired: z.boolean(),
   exemptOriginal: z.boolean().default(false),

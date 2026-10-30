@@ -1,14 +1,23 @@
 {
-  "version": "0.1.0-preview.1",
+  "version": "0.4.0-preview.1",
   "directories": [
     "bin",
     "policy",
     "packages/text-quality",
     "packages/essay-writer",
+    "packages/essay-web",
+    "web-public",
     "scripts",
     "test",
-    ".github"
+    ".github",
+    ".trae",
+    "inbox",
+    "outbox",
+    "docs/benchmarks"
   ],
-  "sourceHistory": "new standalone repository",
+  "excludedHistoricalSources": [
+    "packages/essay-writer/src/common-app-protocol-data.ts"
+  ],
+  "sourceHistory": "standalone public history only",
   "policyGroups": 55
 }

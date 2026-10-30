@@ -1,4 +1,13 @@
 node_modules/
+runtime-data/
+**/build/
+**/*.sqlite*
+**/master.key
+**/bootstrap-admin.txt
+/inbox/*
+!/inbox/README.md
+/outbox/*
+!/outbox/README.md
 **/dist/
 .essay-work/
 my demo/
@@ -19,6 +28,9 @@ artifacts/
 /draft.*
 /prompt.txt
 /edits*.json
+/rules.json
+/workflow.json
+/*-review.json
 *.docx
 *.doc
 *.pdf

@@ -1,0 +1,20 @@
+{
+  "name": "@mantou/essay-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {"node": ">=22 <25"},
+  "scripts": {
+    "build": "node build.mjs",
+    "start": "node build/server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "pnpm build && pnpm test"
+  },
+  "dependencies": {
+    "@mantou/essay-writer": "workspace:*",
+    "@mantou/text-quality": "workspace:*",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {"esbuild": "0.28.2"}
+}
