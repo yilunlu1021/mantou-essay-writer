@@ -6,6 +6,7 @@
 - Reuse all seven current SDK review contracts with exact evidence references, bounded model calls, usage accounting and a single repair pass. Missing or failed reviews remain pending; no submission authorization is provided.
 - Keep provider keys encrypted server-side and preserve per-user job isolation, idempotent submissions and cancellation. The local-agent CLI remains available separately.
 - Resolve exact quoted evidence offsets in code, preserve source boundaries and reject ambiguous or changed quotes. Run rule batches with bounded concurrency, keep logic reasoning within a validated output budget, and allow one known-issue repair when other reviews remain unavailable. Revalidate every new version and retain incomplete states.
+- Make the wire schema accept evidence references, return concrete SDK validation hints, and collect complete problem records and current locators for the single repair. Independent reviews precede aggregate process checks; actual execution metadata never certifies meaning. Keep draft/repair reasoning enabled on DeepSeek and cap the workflow at 48 calls.
 
 
 ## 0.3.0-preview.1

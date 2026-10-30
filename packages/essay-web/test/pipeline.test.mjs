@@ -5,7 +5,7 @@ import{tmpdir}from'node:os';
 import{join,resolve}from'node:path';
 import{randomUUID}from'node:crypto';
 import{Store}from'../src/store.mjs';
-import{Pipeline}from'../src/pipeline.mjs';
+import{Pipeline,repairFindings}from'../src/pipeline.mjs';
 // Entirely synthetic declarations. This checks seven real SDK contracts, never actual model prose quality.
 function syntheticRecord(user){
  if(user.phase==='diagnose')return{promptQuote:'',genre:'academic',centralAnswer:'The door is blue.',concerns:[],instructionConflicts:[],missingFacts:[]};
@@ -46,12 +46,13 @@ test('a synthetic full pipeline revalidates all seven actual raw SDK reviews and
  store.setProvider('glm','synthetic-only-standard-api-key');const user=store.login('admin','synthetic-only-password').user;
  const instructions='Preserve the exact source color and use a direct sentence.';
  const input={requestId:randomUUID(),text:'The door was blue.',prompt:'Describe the supplied scene.',title:'Synthetic contract fixture',instructions,mode:'edit',language:'en',genre:'academic',maxWords:null};
- const id=store.createJob(user.id,input,'glm'),observed=[];
- const pipeline=new Pipeline({store,policyRoot:resolve('../essay-writer'),dataRoot:dir,modelCall:async args=>{observed.push(args.user.task.instructions);return{value:syntheticRecord(args.user),model:'SYNTHETIC-CONTRACT-FIXTURE',cost:{known:true,cny:0.0001},latencyMs:1};}});
+ const id=store.createJob(user.id,input,'glm'),observed=[];let styleCalls=0,receivedSdkHint=false;
+ const pipeline=new Pipeline({store,policyRoot:resolve('../essay-writer'),dataRoot:dir,modelCall:async args=>{observed.push(args.user.task.instructions);const value=syntheticRecord(args.user);if(args.user.phase==='style'){styleCalls++;if(styleCalls===1)value.voice.status='available';else receivedSdkHint=args.user.previousValidationErrors.message.includes('exact comparison anchor');}return{value,model:'SYNTHETIC-CONTRACT-FIXTURE',cost:{known:true,cny:0.0001},latencyMs:1};}});
  await pipeline.run(id);const job=store.internalJob(id);assert.equal(job.state,'completed',job.detail);assert.equal(job.result.quality,'ready-for-human-review',JSON.stringify(job.result.reviewErrors));
  assert.deepEqual(job.result.workflow.reviews.map(r=>r.name),['rules','source','answer','style','linguistic','discourse','logic']);assert.ok(job.result.workflow.reviews.every(r=>r.state==='recorded'));
  assert.equal(job.result.deliveryAuthorized,false);assert.equal(job.result.workflow.factsCertified,false);assert.ok(observed.length>7&&observed.every(x=>x===instructions));
  assert.ok((await stat(join(dir,'jobs',id,'working-draft.docx'))).size>100);
+ assert.equal(styleCalls,2);assert.equal(receivedSdkHint,true);
 });
 test('a known answer failure is repaired even when another review is unavailable, then every new review is revalidated',async t=>{
  const dir=await mkdtemp(join(tmpdir(),'essay-repair-')),store=new Store(dir,{bootstrapPassword:'synthetic-only-password'});t.after(async()=>{store.close();await rm(dir,{recursive:true,force:true});});
@@ -60,9 +61,13 @@ test('a known answer failure is repaired even when another review is unavailable
  const id=store.createJob(user.id,input,'glm');let repaired=false,repairs=0;
  const pipeline=new Pipeline({store,policyRoot:resolve('../essay-writer'),dataRoot:dir,maxCost:3,modelCall:async args=>{
   const phase=args.user.phase;let value;
-  if(phase==='draft'||phase==='repair'){if(phase==='repair'){repaired=true;repairs++;}value={body:repaired?input.text:'The door was there.',changes:[],openQuestions:[]};}
+  if(phase==='draft'||phase==='repair'){if(phase==='repair'){repaired=true;repairs++;assert.ok(args.user.repair.findings.some(f=>f.review==='answer'&&f.entry.status==='rework'));assert.ok(args.user.repair.unverified.style);assert.ok(!('raw'in args.user.repair));}value={body:repaired?input.text:'The door was there.',changes:[],openQuestions:[]};}
   else{if(phase==='style'&&!repaired)throw new Error('SYNTHETIC-UNAVAILABLE-REVIEW');value=syntheticRecord(args.user);if(phase==='answer'&&!repaired)value.response.status='rework';}
   return{value,model:'SYNTHETIC-CONTRACT-FIXTURE',cost:{known:true,cny:0.0001},latencyMs:1};
  }});
  await pipeline.run(id);const job=store.internalJob(id);assert.equal(job.state,'completed',job.detail);assert.equal(repairs,1);assert.equal(job.result.quality,'ready-for-human-review',JSON.stringify(job.result.reviewErrors));assert.ok(job.result.workflow.reviews.every(r=>r.state==='recorded'));assert.equal(job.result.deliveryAuthorized,false);
+});
+test('repair feedback preserves prohibited grammar judgments and attaches the exact current locator',()=>{
+ const span={blockId:'p1',start:0,end:10,quote:'A test cue'},raw={rules:{grammar:{sentences:[{id:'s1',relativeClause:'prohibited',mentalFrame:'clear',reason:'A relative clause needs repair.'}],ing:[{id:'ing1',classification:'prohibited',reason:'A gerund is forbidden.'}]},checks:[{checkId:'x',status:'PASS',reason:'Keep this choice.'}]},discourse:{transitions:[{from:span,to:span,connection:'missing',decision:'retain',reason:'The link lacks support.'}]},style:{patterns:[{assessment:'retain',reason:'issue',anchor:{...span,quote:'meaning'}}]}},before=JSON.stringify(raw);
+ const findings=repairFindings(raw,{sentences:[{id:'s1',span}],ing:[{id:'ing1',span}]});assert.equal(JSON.stringify(raw),before);assert.equal(findings.length,3);assert.equal(findings[0].entry.relativeClause,'prohibited');assert.deepEqual(findings[0].locator.span,span);assert.equal(findings[1].entry.classification,'prohibited');assert.equal(findings[2].entry.connection,'missing');assert.deepEqual(findings[2].entry.from,span);assert.deepEqual(findings[2].context.to,span);
 });

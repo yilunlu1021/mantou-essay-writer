@@ -1,5 +1,20 @@
 import { hashValue } from '@mantou/text-quality';
 const originFor=(key,parent,current)=>key==='sources'||key==='originalAnchors'||key==='source'&&parent==='omissions'?'original':current;
+export function reviewWireSchema(schema){
+  const walk=value=>{
+    if(Array.isArray(value))return value.map(walk);
+    if(!value||typeof value!=='object')return value;
+    if(value.type==='object'&&['blockId','start','end','quote'].every(k=>Object.hasOwn(value.properties??{},k)))return{anyOf:[
+      {type:'object',properties:{$ref:{type:'string',pattern:'^a[0-9]+$'}},required:['$ref'],additionalProperties:false},
+      {type:'object',properties:{$quote:{type:'string',minLength:1},blockId:{type:'string',minLength:1},source:{enum:['document','original']}},required:['$quote','blockId'],additionalProperties:false},
+      value
+    ]};
+    const result=Object.fromEntries(Object.entries(value).map(([k,v])=>[k,walk(v)]));
+    if(result.properties?.requirementHash){delete result.properties.requirementHash;if(result.required)result.required=result.required.filter(k=>k!=='requirementHash');}
+    if(result.properties?.details?.type==='array')result.properties.details.minItems=1;
+    return result;
+  };return walk(structuredClone(schema));
+}
 // Only structural references are expanded. Judgments, reasons and PASS states are never invented.
 export function referencePack(value,document,original) {
   const catalog={},seen=new Map();let seq=0;
@@ -27,12 +42,12 @@ export function expandReferences(value,catalog,document,original,prompt) {
     const chars=Array.from(text);
     if(Number.isInteger(v.start)&&Number.isInteger(v.end)&&v.start>=0&&v.end>v.start&&v.end<=chars.length&&chars.slice(v.start,v.end).join('')===quote)
       return {start:v.start,end:v.end,quote};
-    const index=text.indexOf(quote);if(index<0||text.indexOf(quote,index+1)>=0)throw new Error('evidence-quote-not-unique');
+    const index=text.indexOf(quote);if(index<0||text.indexOf(quote,index+1)>=0){const error=new Error('evidence-quote-not-unique');error.hint='Use an unchanged unique quotation or a supplied $ref, with the correct original/document block. Offending block '+String(v.blockId??'prompt')+', quote: '+quote.slice(0,240);throw error;}
     const start=Array.from(text.slice(0,index)).length;return {start,end:start+Array.from(quote).length,quote};
   };
   const exact=(v,source,quote)=>{
     const doc=source==='original'?original:document,b=doc.blocks.find(b=>b.id===v.blockId);
-    if(!b)throw new Error('invalid-evidence-quote');return {blockId:b.id,...locate(v,b.text,quote)};
+    if(!b){const error=new Error('invalid-evidence-quote');error.hint='Use a supplied '+source+' block ID, not a paragraph number: '+String(v.blockId);throw error;}return {blockId:b.id,...locate(v,b.text,quote)};
   };
   const walk=(v,source='document',parent='')=>{
     if(Array.isArray(v))return v.map(x=>walk(x,source,parent));

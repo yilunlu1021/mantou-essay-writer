@@ -26,7 +26,7 @@ export class ProviderError extends Error {
 export async function callModel({provider,key,system,user,phase='review',employeeId,maxTokens=12288,fetchImpl=fetch,timeoutMs=240000,onUsage}) {
   if(!Object.hasOwn(PROVIDERS,provider))throw new ProviderError('invalid-provider');const p=PROVIDERS[provider];
   if(!key)throw new ProviderError('provider-not-configured');
-  const thinking=provider==='glm'||phase==='logic';
+  const thinking=provider==='glm'||['logic','draft','repair'].includes(phase);
   const body={model:p.model,messages:[{role:'system',content:system},{role:'user',content:typeof user==='string'?user:JSON.stringify(user)}],
     response_format:{type:'json_object'},stream:false,max_tokens:maxTokens,
     thinking:{type:thinking?'enabled':'disabled'},...(thinking?{reasoning_effort:'low'}:{temperature:0.6})};

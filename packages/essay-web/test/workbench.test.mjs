@@ -6,7 +6,9 @@ import {join,resolve}from'node:path';
 import {randomUUID}from'node:crypto';
 import {Store}from'../src/store.mjs';
 import {usageCost,callModel,PROVIDERS}from'../src/providers.mjs';
-import {referencePack,expandReferences,bindMetadata}from'../src/references.mjs';
+import {referencePack,expandReferences,bindMetadata,reviewWireSchema}from'../src/references.mjs';
+import {ruleReviewSchema}from'@mantou/essay-writer/dist/rule-review.js';
+import {z}from'zod';
 import {createWorkbench}from'../src/server.mjs';
 import {limitModelCalls}from'../src/model-queue.mjs';
 import {writeDocx}from'@mantou/essay-writer/dist/documents.js';
@@ -62,6 +64,7 @@ test('the provider adapter fixes endpoints, sends standard keys only as headers 
  const payload=JSON.parse(request.body);assert.equal(payload.thinking.type,'enabled');assert.equal(payload.max_tokens,1000);assert.equal(payload.model,'glm-5.3-flash');assert.ok(!request.body.includes(secret));
  await assert.rejects(callModel({provider:'https://example.com',key:secret,system:'',user:'',fetchImpl:fake}),/invalid-provider/);
  await callModel({provider:'deepseek',key:secret,system:'JSON',user:'Synthetic logic check',phase:'logic',maxTokens:16384,fetchImpl:fake});const logic=JSON.parse(request.body);assert.equal(logic.thinking.type,'enabled');assert.equal(logic.reasoning_effort,'low');assert.equal(logic.max_tokens,16384);
+ await callModel({provider:'deepseek',key:secret,system:'JSON',user:'Synthetic draft',phase:'draft',fetchImpl:fake});assert.equal(JSON.parse(request.body).thinking.type,'enabled');assert.equal(JSON.parse(request.body).reasoning_effort,'low');
 });
 test('truncation and malformed JSON do not hide billed usage',async()=>{
  let charged=0;const fake=async()=>new Response(JSON.stringify({usage:{prompt_tokens:10,completion_tokens:100},choices:[{finish_reason:'length',message:{content:'{}'}}]}));
@@ -87,6 +90,12 @@ test('exact quoted evidence derives offsets in its declared source without chang
  assert.throws(()=>expandReferences({sources:[{blockId:'p1',start:0,end:9,quote:'New text.'}]},pack.catalog,document,original),/not-unique/);
  assert.equal(expandReferences({blockId:'p1',start:23,end:27,quote:'word'},pack.catalog,document,original).start,23);
  assert.deepEqual(expandReferences({promptSpan:{start:99,end:100,quote:'Describe the scene.'}},pack.catalog,document,original,'Describe the scene.').promptSpan,{start:0,end:19,quote:'Describe the scene.'});
+});
+test('wire schemas permit the exact reference protocol and omit only program-bound requirement hashes',()=>{
+ const schema=z.toJSONSchema(ruleReviewSchema),before=JSON.stringify(schema),wire=reviewWireSchema(schema);
+ assert.equal(JSON.stringify(schema),before);const checks=wire.properties.checks.items;assert.ok(!('requirementHash'in checks.properties));assert.ok(!checks.required.includes('requirementHash'));assert.deepEqual(checks.properties.status,schema.properties.checks.items.properties.status);
+ assert.equal(checks.properties.details.minItems,1);
+ const spans=[];function walk(v){if(!v||typeof v!=='object')return;if(v.anyOf?.some(s=>s.properties?.$ref))spans.push(v);Object.values(v).forEach(walk);}walk(wire);assert.ok(spans.length>0);for(const span of spans){assert.ok(span.anyOf.some(s=>s.required?.includes('$quote')));assert.ok(span.anyOf.some(s=>s.required?.includes('quote')&&s.required?.includes('start')));}
 });
 async function httpFixture(t){const dir=await mkdtemp(join(tmpdir(),'essay-http-'));const origin='http://127.0.0.1:8787';const app=await createWorkbench({dataDir:dir,origin,policyRoot:resolve('../essay-writer'),publicDir:resolve('public'),bootstrapPassword:secret,
  modelCall:async()=>{throw new Error('SYNTHETIC-STOP-NO-LIVE-MODEL');}});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+app.server.address().port;

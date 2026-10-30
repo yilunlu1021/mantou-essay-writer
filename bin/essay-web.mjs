@@ -24974,7 +24974,7 @@ async function callModel({ provider, key, system, user, phase = "review", employ
   if (!Object.hasOwn(PROVIDERS, provider)) throw new ProviderError("invalid-provider");
   const p = PROVIDERS[provider];
   if (!key) throw new ProviderError("provider-not-configured");
-  const thinking = provider === "glm" || phase === "logic";
+  const thinking = provider === "glm" || ["logic", "draft", "repair"].includes(phase);
   const body = {
     model: p.model,
     messages: [{ role: "system", content: system }, { role: "user", content: typeof user === "string" ? user : JSON.stringify(user) }],
@@ -25015,6 +25015,25 @@ async function callModel({ provider, key, system, user, phase = "review", employ
 // packages/essay-web/src/references.mjs
 init_dist();
 var originFor = (key, parent, current) => key === "sources" || key === "originalAnchors" || key === "source" && parent === "omissions" ? "original" : current;
+function reviewWireSchema(schema) {
+  const walk = (value2) => {
+    if (Array.isArray(value2)) return value2.map(walk);
+    if (!value2 || typeof value2 !== "object") return value2;
+    if (value2.type === "object" && ["blockId", "start", "end", "quote"].every((k) => Object.hasOwn(value2.properties ?? {}, k))) return { anyOf: [
+      { type: "object", properties: { $ref: { type: "string", pattern: "^a[0-9]+$" } }, required: ["$ref"], additionalProperties: false },
+      { type: "object", properties: { $quote: { type: "string", minLength: 1 }, blockId: { type: "string", minLength: 1 }, source: { enum: ["document", "original"] } }, required: ["$quote", "blockId"], additionalProperties: false },
+      value2
+    ] };
+    const result = Object.fromEntries(Object.entries(value2).map(([k, v]) => [k, walk(v)]));
+    if (result.properties?.requirementHash) {
+      delete result.properties.requirementHash;
+      if (result.required) result.required = result.required.filter((k) => k !== "requirementHash");
+    }
+    if (result.properties?.details?.type === "array") result.properties.details.minItems = 1;
+    return result;
+  };
+  return walk(structuredClone(schema));
+}
 function referencePack(value2, document, original) {
   const catalog2 = {}, seen = /* @__PURE__ */ new Map();
   let seq = 0;
@@ -25053,13 +25072,21 @@ function expandReferences(value2, catalog2, document, original, prompt) {
     if (Number.isInteger(v.start) && Number.isInteger(v.end) && v.start >= 0 && v.end > v.start && v.end <= chars.length && chars.slice(v.start, v.end).join("") === quote)
       return { start: v.start, end: v.end, quote };
     const index = text4.indexOf(quote);
-    if (index < 0 || text4.indexOf(quote, index + 1) >= 0) throw new Error("evidence-quote-not-unique");
+    if (index < 0 || text4.indexOf(quote, index + 1) >= 0) {
+      const error51 = new Error("evidence-quote-not-unique");
+      error51.hint = "Use an unchanged unique quotation or a supplied $ref, with the correct original/document block. Offending block " + String(v.blockId ?? "prompt") + ", quote: " + quote.slice(0, 240);
+      throw error51;
+    }
     const start = Array.from(text4.slice(0, index)).length;
     return { start, end: start + Array.from(quote).length, quote };
   };
   const exact = (v, source2, quote) => {
     const doc = source2 === "original" ? original : document, b = doc.blocks.find((b2) => b2.id === v.blockId);
-    if (!b) throw new Error("invalid-evidence-quote");
+    if (!b) {
+      const error51 = new Error("invalid-evidence-quote");
+      error51.hint = "Use a supplied " + source2 + " block ID, not a paragraph number: " + String(v.blockId);
+      throw error51;
+    }
     return { blockId: b.id, ...locate(v, b.text, quote) };
   };
   const walk = (v, source2 = "document", parent = "") => {
@@ -25095,6 +25122,34 @@ var reviewKinds = {
   logic: [prepareLogicReview, reviewLogic, logicReviewSchema]
 };
 var names = { source: "\u6765\u6E90\u4E0E\u4F5C\u8005\u58F0\u97F3", answer: "\u9898\u76EE\u56DE\u5E94", style: "\u8BED\u8A00\u8868\u8FBE", linguistic: "\u53E5\u6CD5\u4E0E\u7528\u8BCD", discourse: "\u8FDE\u7EED\u9605\u8BFB", logic: "\u903B\u8F91\u4E0E\u8BF4\u670D\u529B", rules: "\u5168\u90E8\u9002\u7528\u89C4\u5219" };
+var issueStates = /* @__PURE__ */ new Set(["FAIL", "UNVERIFIED", "UNRESOLVED", "rework", "unresolved", "unverified", "unsupported", "contradicted", "issue", "partial", "unanswered", "missing-premise", "forced-link", "material-pile", "off-topic", "prohibited", "revise", "needs-source", "repetitive-template", "redundant", "forced", "meaning", "addition", "missing-condition", "overreach", "padding", "generic", "repetitive", "missing", "prefer-alternative", "not-reviewed", "delete", "delete-redundancy", "restore-source-action", "reorganize-information"]);
+var issueFields = /* @__PURE__ */ new Set(["status", "verdict", "decision", "judgment", "classification", "relativeClause", "mentalFrame", "triad", "mainClauseOrder", "clauseConnection", "connection", "unnecessaryTail", "semanticStatus", "voiceStatus", "relevanceStatus", "changeKind", "choice", "operation", "recommendation", "assessment", "qualityDecision", "sourceBasis", "perspective", "clauseFunction", "identifiability", "complementRole"]);
+var hasIssue = (value2, kind) => Object.entries(value2).some(([key, v]) => issueFields.has(key) && typeof v === "string" && issueStates.has(v) && !(kind === "linguistic" && key === "assessment" && v !== "not-reviewed")) || kind === "logic" && (value2.material === true && value2.resolved === false || typeof value2.missingPremise === "string" && !!value2.missingPremise.trim());
+function repairFindings(raw, inventory) {
+  const locators = /* @__PURE__ */ new Map();
+  for (const values of Object.values(inventory ?? {})) if (Array.isArray(values)) {
+    for (const item of values) if (item?.id) locators.set(item.id, item);
+  }
+  const out = [];
+  for (const [kind, record2] of Object.entries(raw ?? {})) {
+    const walk = (value2, path = [], parentContext = {}) => {
+      if (!value2 || typeof value2 !== "object") return;
+      if (Array.isArray(value2)) {
+        value2.forEach((v, i2) => walk(v, [...path, i2], parentContext));
+        return;
+      }
+      const context = { ...parentContext, ...Object.fromEntries(Object.entries(value2).filter(([key]) => ["id", "candidateId", "anchor", "candidate", "from", "to", "mention"].includes(key))) };
+      if (hasIssue(value2, kind)) {
+        const entry = path.length ? structuredClone(value2) : Object.fromEntries(Object.entries(value2).filter(([, v]) => v === null || typeof v !== "object"));
+        const id2 = value2.id ?? value2.candidateId ?? context.id ?? context.candidateId;
+        out.push({ review: kind, path, entry, context, ...["rules", "linguistic"].includes(kind) && locators.has(id2) ? { locator: locators.get(id2) } : {} });
+      }
+      for (const [key, v] of Object.entries(value2)) walk(v, [...path, key], context);
+    };
+    walk(record2);
+  }
+  return out;
+}
 var metadata = (k) => ["schemaVersion", "methodVersion", "bindings", "reviewerRole"].includes(k) || /Hash$|Version$/.test(k);
 var taskSchema = external_exports.object({
   promptQuote: external_exports.string().max(1e4),
@@ -25106,7 +25161,7 @@ var taskSchema = external_exports.object({
 }).strict();
 var draftSchema = external_exports.object({ body: external_exports.string().min(1).max(12e4), changes: external_exports.array(external_exports.string().max(2e3)).max(80), openQuestions: external_exports.array(external_exports.string().max(2e3)).max(30) }).strict();
 function details(e) {
-  return e?.issues ? e.issues.slice(0, 8).map((i2) => ({ path: i2.path, message: i2.message })) : { code: String(e.code ?? "review-invalid"), message: String(e.message ?? "review-invalid").slice(0, 500) };
+  return e?.issues ? e.issues.slice(0, 8).map((i2) => ({ path: i2.path, message: i2.message })) : { code: String(e.code ?? "review-invalid"), message: String(e.hint ?? e.message ?? "review-invalid").slice(0, 800) };
 }
 function stripMeta(template) {
   return Object.fromEntries(Object.entries(template).filter(([k]) => !metadata(k)));
@@ -25129,8 +25184,7 @@ function reviewNotes(raw) {
         value2.forEach(walk);
         return;
       }
-      const states = Object.entries(value2).filter(([key]) => /status|verdict|decision|judgment|classification/i.test(key)).map(([, v]) => v);
-      if (states.some((v) => ["FAIL", "UNVERIFIED", "rework", "unresolved", "unverified", "unsupported", "contradicted", "issue", "partial", "unanswered", "missing-premise", "forced-link", "material-pile", "off-topic", "prohibited", "revise", "needs-source", "repetitive-template", "redundant", "forced"].includes(v))) {
+      if (hasIssue(value2, kind)) {
         const parts = ["reason", "semanticNote", "voiceNote", "relevanceNote", "contribution", "whyFollows", "missingPremise", "note"].map((key) => value2[key]).filter((x2) => typeof x2 === "string" && x2.trim());
         if (parts.length) items.push(parts.join(" "));
       }
@@ -25167,9 +25221,9 @@ var Pipeline = class {
 ${this.sourceDocuments.join("\n\n")}
 \u89C4\u5219\u767B\u8BB0\uFF1A
 ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requirement: r.requirement, terms: r.terms })))}`;
-    const user = { task: { instructions: job.input.instructions, prompt: job.input.prompt, mode: job.input.mode }, recordFormat: "\u53EA\u8F93\u51FA\u5B57\u6BB5\u8981\u6C42\u7684\u5224\u65AD\uFF0C\u7406\u7531\u901A\u5E381-2\u53E5\uFF0C\u4E0D\u590D\u8FF0\u653F\u7B56\u3002\u5F15\u7528\u4F18\u5148\u4F7F\u7528\u7ED9\u5B9A$ref\uFF1B\u65B0\u5F15\u6587\u9010\u5B57\u51C6\u786E\u5373\u53EF\uFF0C\u504F\u79FB\u7531\u7A0B\u5E8F\u6838\u5BF9\uFF0C\u4E0D\u4F30\u7B97\u4F4D\u7F6E\u3002", phase, ...payload, jsonSchema: schema };
+    const user = { task: { instructions: job.input.instructions, prompt: job.input.prompt, mode: job.input.mode }, recordFormat: "\u53EA\u8F93\u51FA\u5B57\u6BB5\u8981\u6C42\u7684\u5224\u65AD\uFF0C\u7406\u7531\u901A\u5E381-2\u53E5\uFF0C\u4E0D\u590D\u8FF0\u653F\u7B56\u3002\u5F15\u7528\u4F18\u5148\u4F7F\u7528\u7ED9\u5B9A$ref\uFF1B\u65B0\u5F15\u6587\u9010\u5B57\u51C6\u786E\u5373\u53EF\uFF0C\u504F\u79FB\u7531\u7A0B\u5E8F\u6838\u5BF9\uFF0C\u4E0D\u4F30\u7B97\u4F4D\u7F6E\u3002", phase, ...payload, jsonSchema: reviewWireSchema(schema) };
     const reservation = ((Buffer.byteLength(system) + Buffer.byteLength(JSON.stringify(user)) + 4e3) * PROVIDERS[job.provider].price.input + maxTokens * PROVIDERS[job.provider].price.output) / 1e6;
-    const callId = this.store.reserveCall(job.id, phase, job.provider, reservation, { maxCost: this.maxCost, maxCalls: 36 });
+    const callId = this.store.reserveCall(job.id, phase, job.provider, reservation, { maxCost: this.maxCost, maxCalls: 48 });
     let recorded = false;
     try {
       const result = await this.modelCall({
@@ -25177,7 +25231,7 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
         key,
         system,
         user,
-        phase: phase === "logic" ? "logic" : "review",
+        phase,
         employeeId: job.user_id,
         maxTokens,
         shouldRun: () => this.store.internalJob(job.id)?.state === "running",
@@ -25219,6 +25273,7 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
     const englishApplication2 = ["en", "mixed"].includes(session.manifest.context.language) && ["personal-narrative", "application-explanatory"].includes(session.manifest.context.genre);
     const output = await this.validated(job, repair ? "repair" : "draft", {
       instruction: repair ? "\u53EA\u4FEE\u590D\u5DF2\u6709\u590D\u6838\u4E2D\u7684\u660E\u786E\u95EE\u9898\uFF0C\u4FDD\u7559\u539F\u7A3F\u4E8B\u5B9E\u548C\u4F5C\u8005\u58F0\u97F3\uFF1B\u7F3A\u7D20\u6750\u4E0D\u5F97\u7F16\u9020\u3002" : "\u6309\u9898\u76EE\u53CA\u987E\u95EE\u8981\u6C42\u4FEE\u6539\u3002\u5FC5\u8981\u76F4\u8FF0\u3001\u76F8\u90BBSVO\u3001\u65F6\u95F4\u548C\u56E0\u679C\u4ECE\u53E5\u53EF\u4FDD\u7559\uFF0C\u52FF\u673A\u68B0\u5C06-ing\u6539to\u3002\u8FD4\u56DE\u5B8C\u6574\u6B63\u6587\uFF0C\u9898\u76EE\u4E0E\u8BF4\u660E\u4E0D\u8981\u653E\u5165body\u3002",
+      repairBoundary: repair ? "\u590D\u6838\u610F\u89C1\u4E5F\u987B\u5BF9\u7167\u539F\u7A3F\u4E0E\u73B0\u884C\u89C4\u5219\u3002\u8BA1\u6570\u4EE5\u7A0B\u5E8Fmetrics\u4E3A\u51C6\uFF0C\u4E0D\u628A\u5173\u7CFB\u4ECE\u53E5\u5F53\u540D\u8BCD\u6027\u4ECE\u53E5\uFF1B\u4E0D\u80FD\u4E3A\u8FCE\u5408\u5BA1\u6838\u800C\u65B0\u589E\u7ECF\u5386\u3001\u5BF9\u767D\u6216\u540E\u679C\u3002\u660E\u663E\u8BEF\u5224\u5E94\u5728openQuestions\u51C6\u786E\u8BB0\u5F55\u5206\u6B67\uFF0C\u5176\u4ED6\u771F\u5B9E\u7981\u4EE4\u4ECD\u987B\u4FEE\u6B63\u3002" : null,
       context: session.manifest.context,
       original: session.original,
       document: session.document,
@@ -25241,25 +25296,64 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
   }
   async reviews(job, sessionPath) {
     const s = await loadSession(this.policyRoot, sessionPath), raw = {}, results = {}, errors = {};
+    const entries = Object.entries(reviewKinds);
+    for (let start = 0; start < entries.length; start += 2) {
+      await Promise.allSettled(entries.slice(start, start + 2).map(async ([kind, [prepare, review, schema]]) => {
+        this.stage(job.id, "\u590D\u6838" + names[kind]);
+        try {
+          const prep = await prepare(this.policyRoot, sessionPath), pack2 = referencePack(stripMeta(prep.template), s.document, s.original);
+          const record2 = await this.validated(
+            job,
+            kind,
+            {
+              instruction: '\u72EC\u7ACB\u5B8C\u6574\u9605\u8BFB\u9898\u76EE\u3001\u539F\u7A3F\u53CA\u5F53\u524D\u6B63\u6587\uFF0C\u518D\u586B\u5199\u5168\u90E8\u5224\u65AD\u3001\u7406\u7531\u3001\u8BC1\u636E\u548C\u53CD\u4F8B\u3002\u56FA\u5B9A\u5019\u9009ID\u3001\u5168\u90E8\u903B\u8F91\u6BB5\u3001\u7A97\u53E3\u548C\u6865\u6881\u987B\u5B8C\u6574\u4E14\u6309\u5BF9\u5E94\u987A\u5E8F\u8986\u76D6\u3002\u6765\u6E90passages\u6309\u53E5\u6216\u4E0D\u53EF\u62C6\u8BED\u4E49\u5355\u5143\u5C55\u5F00\uFF1Bsources\u3001omissions\u3001claims\u3001relations\u53CA\u5176\u4ED6\u81EA\u7531\u8BC1\u636E\u6570\u7EC4\u6309\u5B9E\u9645\u5185\u5BB9\u586B\u5199\uFF0C\u4E0D\u80FD\u628A\u7A7A\u6A21\u677F\u5F53\u514D\u67E5\uFF0C\u65E0\u9879\u987B\u7ED9schema\u8981\u6C42\u7684\u7406\u7531\u3002\u5C40\u90E8\u7F3A\u53E3\u4E0D\u80FD\u88ABadopt\u8986\u76D6\uFF1B\u7F3A\u6765\u6E90\u4FDD\u6301\u672A\u6838\u3002\u4E0D\u5F97\u4F2A\u79F0\u4EBA\u5DE5\u6279\u51C6\u3002\u5F15\u7528\u76EE\u5F55\u53EF\u7528{$ref:"a1"}\uFF0C\u65B0\u51C6\u786E\u5B50\u53E5\u53EF\u7528{$quote:"\u51C6\u786E\u5F15\u6587",blockId:"p1",source:"document"}\u3002',
+              reviewInstructions: prep.instructions,
+              context: s.manifest.context,
+              original: s.original,
+              document: s.document,
+              adapterNotes: kind === "style" ? "\u672C\u4EFB\u52A1\u672A\u63D0\u4F9B\u72EC\u7ACBstyleEvidence\u53C2\u8003\u3002voice.status\u7528unavailable\u4E14anchors\u4E3A\u7A7A\uFF1B\u4ECD\u987B\u5BF9\u5F53\u524D\u539F\u7A3F\u5177\u4F53\u586B\u5199preserve/avoidCopying/reason\uFF0C\u539F\u7A3F\u542B\u4E49\u5BF9\u7167\u5728source\u590D\u6838\uFF0C\u4E0D\u865A\u6784referenceId\u3002" : kind === "logic" ? "requirements\u7684promptSpan\u5408\u8BA1\u987B\u8986\u76D6\u5B9E\u9645\u9898\u76EE\u5168\u90E8\u975E\u7A7A\u6587\u672C\uFF0C\u5305\u62EC\u9898\u53F7\u3001\u524D\u8A00\u548C\u957F\u5EA6\u9650\u5236\u3002\u975E\u4F5C\u7B54\u6761\u4EF6\u53EFnot-applicable\u5E76\u7ED9\u51C6\u786E\u7406\u7531\uFF0C\u4E0D\u9759\u9ED8\u6F0F\u6389\u3002" : kind === "discourse" ? "currentOrder\u4FDD\u6301\u5B8C\u6574\u6A21\u677F\u987A\u5E8F\uFF1B\u591A\u6BB5\u65F6alternativeOrder\u5FC5\u987B\u662F\u8FD9\u4E9B\u76F8\u540CID\u7684\u5B8C\u6574\u4E0D\u540C\u6392\u5217\uFF0C\u5E76\u8BF4\u660E\u6BD4\u8F83\u4F9D\u636E\u3002\u4E0D\u7528\u6BB5\u843D\u6458\u8981\u4EE3\u66FFID\uFF0C\u4E0D\u628A\u65E0\u987B\u4FEE\u6539\u5F53\u4F5C\u514D\u6BD4\u8F83\u3002" : "\u6309\u51C6\u786E\u76EE\u5F55\u5F15\u7528\u539F\u7A3F\u6216\u6B63\u6587\uFF0C\u4E0D\u628A\u91CA\u4E49\u5F53\u9010\u5B57\u5F15\u6587\u3002",
+              preparation: Object.fromEntries(Object.entries(prep).filter(([k]) => !["template", "original", "document", "instructions", "bindings", "context"].includes(k))),
+              template: pack2.value,
+              evidenceCatalog: pack2.catalog
+            },
+            shapeFor(schema),
+            async (value2) => {
+              const record3 = bindMetadata(expandReferences(value2, pack2.catalog, s.document, s.original, s.manifest.context.prompt), prep.template);
+              if (kind === "logic") record3.reviewer = { id: job.provider + ":separate-pass", participatedInEditing: job.input.mode !== "review", independence: "separate-pass" };
+              if ("reviewerRole" in record3) record3.reviewerRole = "agent";
+              const result = await review(this.policyRoot, sessionPath, record3);
+              return { record: record3, result };
+            }
+          );
+          raw[kind] = record2.record;
+          results[kind] = record2.result;
+        } catch (e) {
+          raw[kind] = null;
+          errors[kind] = details(e);
+        }
+      }));
+    }
     const prepared2 = await prepareRuleReview(this.policyRoot, sessionPath), rule = structuredClone(prepared2.template);
     const checks = [];
     for (let group = 0; group < prepared2.cards.length; group += 48) {
       const offsets = [group, group + 24].filter((start) => start < prepared2.cards.length);
       const batches = await Promise.all(offsets.map(async (start) => {
-        this.stage(job.id, "\u9010\u9879\u6838\u5BF9\u5199\u4F5C\u89C4\u5219", `\u5DF2\u6838\u5BF9 ${start} / ${prepared2.cards.length} \u4E2A\u68C0\u67E5\u5355\u5143`);
-        const cards = prepared2.cards.slice(start, start + 24), template = rule.checks.slice(start, start + 24), pack2 = referencePack({ checks: template }, s.document, s.original);
+        this.stage(job.id, "\u9010\u9879\u6838\u5BF9\u5199\u4F5C\u89C4\u5219", `\u672C\u7EC4\u68C0\u67E5 ${start + 1}-${Math.min(start + 24, prepared2.cards.length)} / ${prepared2.cards.length} \u4E2A\u5355\u5143`);
+        const cards = prepared2.cards.slice(start, start + 24), template = rule.checks.slice(start, start + 24), pack2 = referencePack({ checks: template.map(({ requirementHash, ...row }) => row) }, s.document, s.original);
         try {
           const rows = await this.validated(
             job,
             "rules-" + start,
             {
-              instruction: "\u9010\u9879\u72EC\u7ACB\u5224\u5B9A\u8FD9\u4E9B\u68C0\u67E5\u5355\u5143\u53CA\u5176\u5168\u90E8\u5B50\u8981\u6C42\u3002\u8FD4\u56DEchecks\uFF0CcheckId\u987A\u5E8F\u4FDD\u6301\u3002\u9700\u8981\u5F53\u524D\u8BC1\u636E\u548C\u5177\u4F53\u7406\u7531\uFF1B\u4E0D\u80FD\u4E00\u5F8BPASS\u3001\u7A7A\u7406\u7531\u6216\u7B3C\u7EDFprocess\u58F0\u660E\u3002\u53EF\u7528\u51C6\u786E$ref\u5F15\u7528\u76EE\u5F55\u4E2D\u7684\u539F\u7A3F/\u6B63\u6587\uFF0Ckind\u5FC5\u987B\u5BF9\u5E94\u6765\u6E90\u3002\u5143\u6570\u636ErequirementHash\u53EF\u7167\u6A21\u677F\u4FDD\u7559\u3002",
+              instruction: "\u9010\u9879\u72EC\u7ACB\u5224\u5B9A\u8FD9\u4E9B\u68C0\u67E5\u5355\u5143\u53CA\u5176\u5168\u90E8\u5B50\u8981\u6C42\u3002\u8FD4\u56DEchecks\uFF0CcheckId\u987A\u5E8F\u4FDD\u6301\u3002\u9700\u8981\u5F53\u524D\u8BC1\u636E\u548C\u5177\u4F53\u7406\u7531\uFF1B\u4E0D\u80FD\u4E00\u5F8BPASS\u3001\u7A7A\u7406\u7531\u6216\u7B3C\u7EDFprocess\u58F0\u660E\u3002\u53EF\u7528\u51C6\u786E$ref\u5F15\u7528\u76EE\u5F55\u4E2D\u7684\u539F\u7A3F/\u6B63\u6587\uFF0Ckind\u5FC5\u987B\u5BF9\u5E94\u6765\u6E90\u3002requirementHash\u7531\u7A0B\u5E8F\u7ED1\u5B9A\uFF0C\u65E0\u9700\u751F\u6210\u3002",
               cards,
               template: pack2.value,
               evidenceCatalog: pack2.catalog,
               context: s.manifest.context,
               original: s.original,
-              document: s.document
+              document: s.document,
+              processFacts: { entry: "employee-web SDK orchestration authorized by project owner", originalPreserved: true, currentVersion: s.current.number, currentDocumentHash: hashValue(s.document), policyVersion: s.policy.version, fullRuleUnits: prepared2.cards.length, ruleBatches: "The program assembles every unit; this request is one subset, not the entire review scope.", availableReviewResults: results, unavailableReviews: errors, metrics: countText(s.document.blocks.map((b) => b.text).join("\n\n")), humanAdoption: false, formalSubmission: false, detectorReportProvided: false, externalHumanizeUsed: false },
+              processInstruction: "\u533A\u5206\u5F53\u524DSDK\u7F16\u6392\u4E0E\u65E0\u5DE5\u5177\u7684\u5916\u90E8\u804A\u5929\u3002\u672C\u8F6E\u5DF2\u5B8C\u6210\u7684\u7A0B\u5E8F\u590D\u6838\u89C1processFacts\uFF0C\u4E0D\u865A\u79F0\u8FD0\u884C\u5DE5\u4F5C\u7AD9CLI\u3002\u4EC5\u56E0\u672C\u6279\u662F\u5B50\u96C6\u4E0D\u7B49\u4E8E\u5176\u4ED6\u89C4\u5219\u672A\u5B89\u6392\uFF1B\u540E\u7EED\u7531\u540C\u4E00SDK\u6838\u5BF9\u5B8C\u6574\u8986\u76D6\u3002\u6B63\u5F0F\u63D0\u4EA4/\u5916\u90E8\u68C0\u6D4B\u7B49\u672A\u89E6\u53D1\u6761\u4EF6\u6309\u5177\u4F53\u6761\u4EF6\u5224\u9002\u7528\uFF0C\u4E0D\u628A\u672A\u8FDB\u884C\u6B63\u5F0F\u91C7\u7528\u5F53\u4F5C\u5185\u90E8\u5019\u9009\u7F16\u8F91\u5931\u8D25\u3002\u4FDD\u7559\u5B9E\u9645\u5931\u8D25\u6216\u672A\u77E5\uFF0C\u4E0D\u51ED\u8FD9\u4E9B\u5143\u6570\u636E\u5BA3\u5E03\u8BED\u4E49\u5408\u89C4\u3002"
             },
             { type: "object", required: ["checks"], properties: { checks: external_exports.toJSONSchema(ruleReviewSchema).properties.checks } },
             (value2) => {
@@ -25309,42 +25403,6 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
       errors.rules = details(e);
       raw.rules = null;
     }
-    const entries = Object.entries(reviewKinds);
-    for (let start = 0; start < entries.length; start += 2) {
-      await Promise.allSettled(entries.slice(start, start + 2).map(async ([kind, [prepare, review, schema]]) => {
-        this.stage(job.id, "\u590D\u6838" + names[kind]);
-        try {
-          const prep = await prepare(this.policyRoot, sessionPath), pack2 = referencePack(stripMeta(prep.template), s.document, s.original);
-          const record2 = await this.validated(
-            job,
-            kind,
-            {
-              instruction: '\u72EC\u7ACB\u5B8C\u6574\u9605\u8BFB\u9898\u76EE\u3001\u539F\u7A3F\u53CA\u5F53\u524D\u6B63\u6587\uFF0C\u518D\u586B\u5199\u5168\u90E8\u5224\u65AD\u3001\u7406\u7531\u3001\u8BC1\u636E\u548C\u53CD\u4F8B\u3002\u56FA\u5B9A\u5019\u9009ID\u3001\u5168\u90E8\u903B\u8F91\u6BB5\u3001\u7A97\u53E3\u548C\u6865\u6881\u987B\u5B8C\u6574\u4E14\u6309\u5BF9\u5E94\u987A\u5E8F\u8986\u76D6\u3002\u6765\u6E90passages\u6309\u53E5\u6216\u4E0D\u53EF\u62C6\u8BED\u4E49\u5355\u5143\u5C55\u5F00\uFF1Bsources\u3001omissions\u3001claims\u3001relations\u53CA\u5176\u4ED6\u81EA\u7531\u8BC1\u636E\u6570\u7EC4\u6309\u5B9E\u9645\u5185\u5BB9\u586B\u5199\uFF0C\u4E0D\u80FD\u628A\u7A7A\u6A21\u677F\u5F53\u514D\u67E5\uFF0C\u65E0\u9879\u987B\u7ED9schema\u8981\u6C42\u7684\u7406\u7531\u3002\u5C40\u90E8\u7F3A\u53E3\u4E0D\u80FD\u88ABadopt\u8986\u76D6\uFF1B\u7F3A\u6765\u6E90\u4FDD\u6301\u672A\u6838\u3002\u4E0D\u5F97\u4F2A\u79F0\u4EBA\u5DE5\u6279\u51C6\u3002\u5F15\u7528\u76EE\u5F55\u53EF\u7528{$ref:"a1"}\uFF0C\u65B0\u51C6\u786E\u5B50\u53E5\u53EF\u7528{$quote:"\u51C6\u786E\u5F15\u6587",blockId:"p1",source:"document"}\u3002',
-              reviewInstructions: prep.instructions,
-              context: s.manifest.context,
-              original: s.original,
-              document: s.document,
-              preparation: Object.fromEntries(Object.entries(prep).filter(([k]) => !["template", "original", "document", "instructions", "bindings", "context"].includes(k))),
-              template: pack2.value,
-              evidenceCatalog: pack2.catalog
-            },
-            shapeFor(schema),
-            async (value2) => {
-              const record3 = bindMetadata(expandReferences(value2, pack2.catalog, s.document, s.original, s.manifest.context.prompt), prep.template);
-              if (kind === "logic") record3.reviewer = { id: job.provider + ":separate-pass", participatedInEditing: job.input.mode !== "review", independence: "separate-pass" };
-              if ("reviewerRole" in record3) record3.reviewerRole = "agent";
-              const result = await review(this.policyRoot, sessionPath, record3);
-              return { record: record3, result };
-            }
-          );
-          raw[kind] = record2.record;
-          results[kind] = record2.result;
-        } catch (e) {
-          raw[kind] = null;
-          errors[kind] = details(e);
-        }
-      }));
-    }
     const workflow = (await prepareWritingWorkflow(this.policyRoot, sessionPath)).template;
     for (const kind of Object.keys(workflow.reviews)) workflow.reviews[kind] = raw[kind] ?? null;
     const summary = await checkWritingWorkflow(this.policyRoot, sessionPath, workflow);
@@ -25390,7 +25448,10 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
       if (job.input.mode !== "review" && reviews.summary.workflowStatus === "needs-rework") {
         this.stage(id2, "\u9488\u5BF9\u5177\u4F53\u95EE\u9898\u8FD4\u4FEE");
         try {
-          latestDraft = await this.draft(job, sessionPath, diagnosis, { results: reviews.results, raw: reviews.raw, unverified: reviews.errors });
+          const p = await prepareRuleReview(this.policyRoot, sessionPath), inventory = { ...p.inventory, ...p.expressionInventory };
+          if (job.input.language === "en") inventory.linguistic = (await prepareLinguisticReview(this.policyRoot, sessionPath)).analysis.candidates;
+          const grammar = reviews.raw.rules?.grammar;
+          latestDraft = await this.draft(job, sessionPath, diagnosis, { results: reviews.results, findings: repairFindings(reviews.raw, inventory), quotaDeclarations: { limits: reviews.results.rules?.limits, metrics: reviews.results.rules?.metrics, ing: grammar?.ing, nominalClauses: grammar?.sentences.filter((s2) => s2.nominalClauses.length).map((s2) => ({ id: s2.id, spans: s2.nominalClauses })) }, mechanicalErrors: reviews.summary.mechanicalErrors, unverified: reviews.errors });
           reviews = await this.reviews(job, sessionPath);
         } catch (e) {
           reviews.errors.repair = details(e);
