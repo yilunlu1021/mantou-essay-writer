@@ -57,7 +57,7 @@ export class Store {
   getJob(userId,id){const r=this.db.prepare('SELECT * FROM jobs WHERE id=? AND user_id=?').get(id,userId);if(!r)return null;return{...r,input:JSON.parse(r.input_json),result:r.result_json?JSON.parse(r.result_json):null};}
   internalJob(id){const r=this.db.prepare('SELECT user_id FROM jobs WHERE id=?').get(id);return r?this.getJob(r.user_id,id):null;}
   updateJob(id,state,stage,detail='',result){const value=result===undefined?undefined:JSON.stringify(result);const changed=value===undefined?this.db.prepare("UPDATE jobs SET state=?,stage=?,detail=?,updated_at=? WHERE id=? AND state IN ('queued','running')").run(state,stage,detail,new Date().toISOString(),id):this.db.prepare("UPDATE jobs SET state=?,stage=?,detail=?,result_json=?,updated_at=? WHERE id=? AND state IN ('queued','running')").run(state,stage,detail,value,new Date().toISOString(),id);return changed.changes>0;}
-  reserveCall(jobId,phase,provider,amount,{maxCost=2,maxCalls=36}={}){
+  reserveCall(jobId,phase,provider,amount,{maxCost=10,maxCalls=36}={}){
     if(!Number.isFinite(amount)||amount<=0)throw new Error('invalid-cost-reservation');
     if(this.dailyTotal()+amount>50)throw new Error('daily-api-budget-limit');
     const changed=this.db.prepare("UPDATE jobs SET reserved=reserved+?,calls=calls+1 WHERE id=? AND state='running' AND cost+reserved+?<=? AND calls<?").run(amount,jobId,amount,maxCost,maxCalls);

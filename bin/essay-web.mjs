@@ -21365,7 +21365,7 @@ var Store = class {
     const changed = value2 === void 0 ? this.db.prepare("UPDATE jobs SET state=?,stage=?,detail=?,updated_at=? WHERE id=? AND state IN ('queued','running')").run(state, stage, detail, (/* @__PURE__ */ new Date()).toISOString(), id2) : this.db.prepare("UPDATE jobs SET state=?,stage=?,detail=?,result_json=?,updated_at=? WHERE id=? AND state IN ('queued','running')").run(state, stage, detail, value2, (/* @__PURE__ */ new Date()).toISOString(), id2);
     return changed.changes > 0;
   }
-  reserveCall(jobId, phase, provider, amount, { maxCost = 2, maxCalls = 36 } = {}) {
+  reserveCall(jobId, phase, provider, amount, { maxCost = 10, maxCalls = 36 } = {}) {
     if (!Number.isFinite(amount) || amount <= 0) throw new Error("invalid-cost-reservation");
     if (this.dailyTotal() + amount > 50) throw new Error("daily-api-budget-limit");
     const changed = this.db.prepare("UPDATE jobs SET reserved=reserved+?,calls=calls+1 WHERE id=? AND state='running' AND cost+reserved+?<=? AND calls<?").run(amount, jobId, amount, maxCost, maxCalls);
@@ -25197,7 +25197,7 @@ function reviewNotes(raw) {
   return output;
 }
 var Pipeline = class {
-  constructor({ store, policyRoot: policyRoot2, dataRoot, maxCost = 1.5, modelCall = callModel }) {
+  constructor({ store, policyRoot: policyRoot2, dataRoot, maxCost = 10, modelCall = callModel }) {
     Object.assign(this, { store, policyRoot: policyRoot2, dataRoot, maxCost, modelCall });
     this.policyPromise = this.loadPolicy();
   }
@@ -25402,7 +25402,7 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
     } catch (e) {
       errors.grammar = details(e);
     }
-    rule.execution = { provider: job.provider, model: [...new Set(this.store.callsFor(job.id).map((c) => c.usage?.model).filter(Boolean))].join(",") || null, settings: "\u72EC\u7ACB\u8BF7\u6C42\uFF1B\u56FA\u5B9A\u7AEF\u70B9\uFF1BJSON\u6821\u9A8C\uFF1B\u6709\u754C\u8F93\u51FA\u4E0E\u8D39\u7528" };
+    rule.execution = { provider: job.provider, model: [...new Set(this.store.callsFor(job.id).map((c) => c.usage?.model).filter(Boolean))].join(",") || null, settings: "\u72EC\u7ACB\u8BF7\u6C42\uFF1B\u56FA\u5B9A\u7AEF\u70B9\uFF1BJSON\u6821\u9A8C\uFF1B\u6709\u754C\u8F93\u51FA\u4E0E\u8C03\u7528" };
     raw.rules = rule;
     try {
       results.rules = await reviewRules(this.policyRoot, sessionPath, rule);
@@ -25553,16 +25553,16 @@ var messages = {
   "provider-not-configured": "\u8BF7\u7BA1\u7406\u5458\u5148\u914D\u7F6E\u6240\u9009\u6A21\u578B\u7684\u6807\u51C6API\u5BC6\u94A5\u3002",
   "provider-key-rejected": "\u6A21\u578B\u5BC6\u94A5\u88AB\u62D2\u7EDD\uFF0C\u8BF7\u7BA1\u7406\u5458\u68C0\u67E5\u6807\u51C6API\u5BC6\u94A5\u548C\u8D26\u6237\u6743\u9650\u3002",
   "provider-rate-limited": "\u6A21\u578B\u670D\u52A1\u9650\u6D41\uFF0C\u672C\u8F6E\u5DF2\u4FDD\u7559\u8BB0\u5F55\uFF0C\u53EF\u7A0D\u540E\u518D\u8BD5\u3002",
-  "provider-timeout": "\u6A21\u578B\u8BF7\u6C42\u8D85\u65F6\uFF0C\u8D39\u7528\u72B6\u6001\u53EF\u80FD\u672A\u786E\u8BA4\uFF0C\u672C\u8F6E\u5DF2\u505C\u6B62\u3002",
-  "job-budget-or-call-limit": "\u672C\u8F6E\u5DF2\u5230\u8D39\u7528\u6216\u8C03\u7528\u6B21\u6570\u4E0A\u9650\uFF0C\u5DF2\u6709\u7A3F\u4EF6\u53CA\u68C0\u67E5\u8BB0\u5F55\u5DF2\u4FDD\u7559\u3002",
-  "daily-api-budget-limit": "\u4ECA\u5929\u5DF2\u5230\u7F51\u7AD9API\u8D39\u7528\u4E0A\u9650\uFF0C\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u3002",
+  "provider-timeout": "\u6A21\u578B\u8BF7\u6C42\u8D85\u65F6\uFF0C\u8BF7\u6C42\u72B6\u6001\u5C1A\u672A\u786E\u8BA4\uFF0C\u672C\u8F6E\u5DF2\u505C\u6B62\u3002",
+  "job-budget-or-call-limit": "\u672C\u8F6E\u5DF2\u5230\u5904\u7406\u4E0A\u9650\uFF0C\u5DF2\u6709\u7A3F\u4EF6\u53CA\u68C0\u67E5\u8BB0\u5F55\u5DF2\u4FDD\u7559\u3002",
+  "daily-api-budget-limit": "\u4ECA\u5929\u5DF2\u5230\u7F51\u7AD9\u5904\u7406\u4E0A\u9650\uFF0C\u8BF7\u8054\u7CFB\u7BA1\u7406\u5458\u3002",
   "model-output-truncated": "\u6A21\u578B\u8F93\u51FA\u88AB\u622A\u65AD\uFF0C\u672C\u8F6E\u5DF2\u4FDD\u7559\u7528\u91CF\u8BB0\u5F55\u3002",
   "model-output-incomplete": "\u6A21\u578B\u670D\u52A1\u672A\u5B8C\u6210\u672C\u6B21\u8F93\u51FA\uFF0C\u672C\u8F6E\u5DF2\u505C\u6B62\u3002",
   "model-invalid-json": "\u6A21\u578B\u672A\u8FD4\u56DE\u6709\u6548\u7684\u68C0\u67E5\u8BB0\u5F55\uFF0C\u672C\u8F6E\u5DF2\u4FDD\u7559\u5F85\u6838\u72B6\u6001\u3002",
   "docx-structure": "\u6587\u6863\u542B\u65E0\u6CD5\u53EF\u9760\u81EA\u52A8\u8BFB\u53D6\u7684\u7ED3\u6784\uFF0C\u8BF7\u63D0\u4F9B\u6E05\u6D01\u6B63\u6587DOCX\u6216\u7C98\u8D34\u6587\u5B57\u3002"
 };
 var safeError = (e) => messages[e?.code ?? e?.message] ?? (e?.issues ? "\u8F93\u5165\u683C\u5F0F\u6216\u957F\u5EA6\u4E0D\u7B26\u5408\u8981\u6C42\u3002" : "\u672C\u6B21\u64CD\u4F5C\u672A\u5B8C\u6210\uFF0C\u8BF7\u68C0\u67E5\u8F93\u5165\u6216\u8054\u7CFB\u7BA1\u7406\u5458\u3002");
-async function createWorkbench({ dataDir, origin = "http://127.0.0.1:8787", policyRoot: policyRoot2, publicDir: publicDir2, bootstrapPassword, modelCall, maxCost = 1.5, concurrency = 2 } = {}) {
+async function createWorkbench({ dataDir, origin = "http://127.0.0.1:8787", policyRoot: policyRoot2, publicDir: publicDir2, bootstrapPassword, modelCall, maxCost = 10, concurrency = 2 } = {}) {
   origin = new URL(origin).origin;
   const base2 = dirname2(fileURLToPath(import.meta.url));
   dataDir = resolve4(dataDir ?? join4(base2, "../runtime-data"));
@@ -25570,6 +25570,12 @@ async function createWorkbench({ dataDir, origin = "http://127.0.0.1:8787", poli
   publicDir2 ??= join4(base2, "public");
   await mkdir4(dataDir, { recursive: true, mode: 448 });
   const store = new Store(dataDir, { bootstrapPassword }), invokeModel = limitModelCalls(modelCall ?? callModel, 2), pipeline = new Pipeline({ store, policyRoot: policyRoot2, dataRoot: dataDir, maxCost, modelCall: invokeModel });
+  const publicCalls = (id2) => store.callsFor(id2).map(({ phase, provider, state, usage }) => ({ phase, provider, state, model: usage?.model ?? null }));
+  const publicResult = (result) => {
+    const rules = result?.reviewResults?.rules;
+    if (!rules?.execution) return result;
+    return { ...result, reviewResults: { ...result.reviewResults, rules: { ...rules, execution: { ...rules.execution, settings: "\u72EC\u7ACB\u8BF7\u6C42\uFF1B\u56FA\u5B9A\u7AEF\u70B9\uFF1BJSON\u6821\u9A8C\uFF1B\u6709\u754C\u8F93\u51FA\u4E0E\u8C03\u7528" } } } };
+  };
   const queue = [];
   let active = 0;
   const limits = /* @__PURE__ */ new Map();
@@ -25633,7 +25639,7 @@ async function createWorkbench({ dataDir, origin = "http://127.0.0.1:8787", poli
           throw new Error("invalid-json");
         }
       };
-      if (path === "/api/session" && req.method === "GET") return send(200, { user, providers: store.providerStatus().map((p) => ({ ...p, label: PROVIDERS[p.id].label })), policyVersion: (await pipeline.policyPromise).version, limits: { maxCostPerModel: maxCost, formats: [".docx", ".txt", ".md"] } });
+      if (path === "/api/session" && req.method === "GET") return send(200, { user, providers: store.providerStatus().map((p) => ({ ...p, label: PROVIDERS[p.id].label })), policyVersion: (await pipeline.policyPromise).version, limits: { formats: [".docx", ".txt", ".md"] } });
       if (path === "/api/login" && req.method === "POST") {
         const input2 = await body();
         if (typeof input2.username !== "string" || typeof input2.password !== "string" || input2.username.length > 60 || input2.password.length > 200) return send(400, { error: "invalid-login" });
@@ -25705,7 +25711,7 @@ async function createWorkbench({ dataDir, origin = "http://127.0.0.1:8787", poli
               settled = true;
             }
             store.audit(user.id, "provider-test", provider[1]);
-            return send(200, { ok: result.value?.ok === true, model: result.model, cost: result.cost });
+            return send(200, { ok: result.value?.ok === true, model: result.model });
           } finally {
             if (!settled) store.finishAdminCall(callId, null);
           }
@@ -25724,7 +25730,7 @@ async function createWorkbench({ dataDir, origin = "http://127.0.0.1:8787", poli
         const doc = importText(bytes, ext);
         return send(200, { text: doc.blocks.map((b) => b.text).join("\n\n").replace(/\r\n?/g, "\n"), format: ext, warnings: [] });
       }
-      if (path === "/api/jobs" && req.method === "GET") return send(200, { jobs: store.listJobs(user.id) });
+      if (path === "/api/jobs" && req.method === "GET") return send(200, { jobs: store.listJobs(user.id).map(({ id: id2, title, provider: provider2, state, stage, created_at, updated_at }) => ({ id: id2, title, provider: provider2, state, stage, created_at, updated_at })) });
       if (path === "/api/jobs" && req.method === "POST") {
         if (!limit("submit:" + user.id, 6)) return send(429, { error: "job-rate-limited" });
         const input2 = jobInput.parse(await body());
@@ -25747,12 +25753,12 @@ async function createWorkbench({ dataDir, origin = "http://127.0.0.1:8787", poli
       if (match) {
         const job = store.getJob(user.id, match[1]);
         if (!job) return send(404, { error: "job-not-found" });
-        if (req.method === "GET" && !match[2]) return send(200, { job: { id: job.id, title: job.title, provider: job.provider, state: job.state, stage: job.stage, detail: messages[job.detail] ?? (job.state === "failed" ? "\u672C\u8F6E\u672A\u5B8C\u6210\uFF0C\u8F93\u5165\u53CA\u8C03\u7528\u8BB0\u5F55\u5DF2\u4FDD\u7559\u3002\u8BF7\u68C0\u67E5\u6A21\u578B\u914D\u7F6E\u6216\u8054\u7CFB\u7BA1\u7406\u5458\u3002" : job.detail), cost: job.cost, unknownUsage: job.unknown_usage, created_at: job.created_at, result: job.result, inputSummary: { text: job.input.text, prompt: job.input.prompt, instructions: job.input.instructions } }, calls: store.callsFor(job.id) });
+        if (req.method === "GET" && !match[2]) return send(200, { job: { id: job.id, title: job.title, provider: job.provider, state: job.state, stage: job.stage, detail: messages[job.detail] ?? (job.state === "failed" ? "\u672C\u8F6E\u672A\u5B8C\u6210\uFF0C\u8F93\u5165\u53CA\u8C03\u7528\u8BB0\u5F55\u5DF2\u4FDD\u7559\u3002\u8BF7\u68C0\u67E5\u6A21\u578B\u914D\u7F6E\u6216\u8054\u7CFB\u7BA1\u7406\u5458\u3002" : job.detail), created_at: job.created_at, result: publicResult(job.result), inputSummary: { text: job.input.text, prompt: job.input.prompt, instructions: job.input.instructions } }, calls: publicCalls(job.id) });
         if (req.method === "POST" && match[3] === "cancel") {
           store.cancelQueued(user.id, job.id);
           return send(200, { ok: true });
         }
-        if (req.method === "GET" && match[3] === "report") return send(200, { job: { id: job.id, title: job.title, provider: job.provider, state: job.state, cost: job.cost, unknownUsage: job.unknown_usage }, result: job.result, calls: store.callsFor(job.id) }, { "Content-Disposition": 'attachment; filename="review.json"' });
+        if (req.method === "GET" && match[3] === "report") return send(200, { job: { id: job.id, title: job.title, provider: job.provider, state: job.state }, result: publicResult(job.result), calls: publicCalls(job.id) }, { "Content-Disposition": 'attachment; filename="review.json"' });
         if (req.method === "GET" && match[3] === "source") {
           const ext = job.input.fileExtension ?? ".txt", data = job.input.fileBase64 ? Buffer.from(job.input.fileBase64, "base64") : Buffer.from(job.input.text);
           res.writeHead(200, { "Content-Type": ext === ".docx" ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" : "text/plain; charset=utf-8", "Content-Disposition": `attachment; filename="original${ext}"` });
@@ -25790,7 +25796,7 @@ async function createWorkbench({ dataDir, origin = "http://127.0.0.1:8787", poli
 var base = dirname3(fileURLToPath2(import.meta.url));
 var policyRoot = process.env.ESSAY_POLICY_ROOT ?? (existsSync2(join5(base, "policy/default.json")) ? base : resolve5(base, ".."));
 var publicDir = process.env.ESSAY_PUBLIC_DIR ?? (existsSync2(join5(base, "public/index.html")) ? join5(base, "public") : resolve5(base, "../web-public"));
-var budget = Number(process.env.ESSAY_JOB_BUDGET_CNY ?? 1.5);
+var budget = Number(process.env.ESSAY_JOB_BUDGET_CNY ?? 10);
 if (!Number.isFinite(budget) || budget <= 0 || budget > 10) throw new Error("Invalid job budget");
 var app = await createWorkbench({
   dataDir: process.env.ESSAY_DATA_DIR ?? resolve5(base, "../runtime-data"),

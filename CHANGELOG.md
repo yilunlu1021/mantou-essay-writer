@@ -1,5 +1,7 @@
 # Changelog
 
+- Set the per-model job budget to CNY 10 and keep monetary accounting server-side. Remove price and budget fields from browser responses, including historical results and downloadable review records, while retaining source monetary text and existing daily limits.
+
 ## 0.4.0-preview.1
 
 - Add an optional employee website with independent logins, document extraction, advisor instructions and fixed GLM/DeepSeek standard API integrations.

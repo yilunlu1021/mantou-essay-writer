@@ -37,7 +37,7 @@ function reviewNotes(raw){const output=[];for(const[kind,record]of Object.entrie
   Object.values(value).forEach(walk);};walk(record);const unique=[...new Set(items)].slice(0,50);if(unique.length)output.push({title:names[kind]??kind,items:unique});}return output;}
 
 export class Pipeline {
-  constructor({store,policyRoot,dataRoot,maxCost=1.5,modelCall=callModel}){Object.assign(this,{store,policyRoot,dataRoot,maxCost,modelCall});this.policyPromise=this.loadPolicy();}
+  constructor({store,policyRoot,dataRoot,maxCost=10,modelCall=callModel}){Object.assign(this,{store,policyRoot,dataRoot,maxCost,modelCall});this.policyPromise=this.loadPolicy();}
   async loadPolicy(){const policy=await sdk.loadPolicy(this.policyRoot);this.sourceDocuments=await Promise.all(policy.sources.map(source=>readFile(join(this.policyRoot,source.path),'utf8')));return policy;}
   stage(id,label,detail=''){const current=this.store.internalJob(id);if(!current||current.state==='cancelled')throw new Error('job-cancelled');this.store.updateJob(id,'running',label,detail);}
   async ask(job,phase,payload,schema,{maxTokens=phase==='logic'?16384:12288}={}){
@@ -128,7 +128,7 @@ export class Pipeline {
         value=>sdk.ruleReviewSchema.pick({grammar:true,expression:true}).parse(expandReferences(value,pack.catalog,s.document,s.original,s.manifest.context.prompt)));
       rule.grammar=grammar.grammar;rule.expression=grammar.expression;
     }catch(e){errors.grammar=details(e);}
-    rule.execution={provider:job.provider,model:[...new Set(this.store.callsFor(job.id).map(c=>c.usage?.model).filter(Boolean))].join(',')||null,settings:'独立请求；固定端点；JSON校验；有界输出与费用'};
+    rule.execution={provider:job.provider,model:[...new Set(this.store.callsFor(job.id).map(c=>c.usage?.model).filter(Boolean))].join(',')||null,settings:'独立请求；固定端点；JSON校验；有界输出与调用'};
     raw.rules=rule;
     try{results.rules=await sdk.reviewRules(this.policyRoot,sessionPath,rule);}catch(e){errors.rules=details(e);raw.rules=null;}
     const workflow=(await sdk.prepareWritingWorkflow(this.policyRoot,sessionPath)).template;

@@ -97,8 +97,8 @@ test('wire schemas permit the exact reference protocol and omit only program-bou
  assert.equal(checks.properties.details.minItems,1);
  const spans=[];function walk(v){if(!v||typeof v!=='object')return;if(v.anyOf?.some(s=>s.properties?.$ref))spans.push(v);Object.values(v).forEach(walk);}walk(wire);assert.ok(spans.length>0);for(const span of spans){assert.ok(span.anyOf.some(s=>s.required?.includes('$quote')));assert.ok(span.anyOf.some(s=>s.required?.includes('quote')&&s.required?.includes('start')));}
 });
-async function httpFixture(t){const dir=await mkdtemp(join(tmpdir(),'essay-http-'));const origin='http://127.0.0.1:8787';const app=await createWorkbench({dataDir:dir,origin,policyRoot:resolve('../essay-writer'),publicDir:resolve('public'),bootstrapPassword:secret,
- modelCall:async()=>{throw new Error('SYNTHETIC-STOP-NO-LIVE-MODEL');}});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+app.server.address().port;
+async function httpFixture(t,overrides={}){const dir=await mkdtemp(join(tmpdir(),'essay-http-'));const origin='http://127.0.0.1:8787';const app=await createWorkbench({dataDir:dir,origin,policyRoot:resolve('../essay-writer'),publicDir:resolve('public'),bootstrapPassword:secret,
+ modelCall:async()=>{throw new Error('SYNTHETIC-STOP-NO-LIVE-MODEL');},...overrides});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+app.server.address().port;
  t.after(async()=>{await app.close();await rm(dir,{recursive:true,force:true});});
  const request=(path,{method='GET',body,cookie,requestOrigin=origin}={})=>fetch(url+path,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...(method!=='GET'?{Origin:requestOrigin}:{}),...(cookie?{Cookie:cookie}:{})},...(body?{body:JSON.stringify(body)}:{})});
  const response=await request('/api/login',{method:'POST',body:{username:'admin',password:secret}});const cookie=response.headers.get('set-cookie').split(';')[0];return{app,request,cookie};}
@@ -126,4 +126,28 @@ test('HTTP requests cannot enable mocks, expose provider keys or duplicate jobs'
 test('successful login does not lock other employees out; blank source is rejected before any model call',async t=>{
  const{app,request,cookie}=await httpFixture(t);for(let i=0;i<12;i++)assert.equal((await request('/api/login',{method:'POST',body:{username:'admin',password:secret}})).status,200);
  app.store.setProvider('glm',secret);const r=await request('/api/jobs',{method:'POST',cookie,body:{requestId:randomUUID(),text:' \n\t ',model:'glm'}});assert.equal(r.status,400);assert.equal(app.store.db.prepare('SELECT COUNT(*) AS n FROM calls').get().n,0);
+});
+test('the default task budget allows ten yuan and blocks further reservations without changing password policy',async t=>{
+ const{app,cookie}=await httpFixture(t);assert.equal(app.pipeline.maxCost,10);
+ const user=app.store.user(cookie.slice(14)),id=app.store.createJob(user.id,{text:'Synthetic'},'glm');app.store.updateJob(id,'running','Synthetic');
+ const first=app.store.reserveCall(id,'test','glm',9.75);app.store.reserveCall(id,'test','glm',0.25);
+ assert.equal(app.store.internalJob(id).reserved,10);assert.throws(()=>app.store.reserveCall(id,'test','glm',0.01),/job-budget-or-call-limit/);
+ app.store.finishCall(first,{cost:{known:true,cny:0.5}});assert.equal(app.store.internalJob(id).cost,0.5);
+ assert.throws(()=>app.store.addUser({username:'shorttest',name:'Synthetic',password:'shorttest'}),/invalid-account/);
+ assert.throws(()=>app.store.changePassword(user.id,'short'),/invalid-password/);
+});
+test('browser responses and review downloads omit monetary fields while internal billing remains intact',async t=>{
+ const{app,request,cookie}=await httpFixture(t,{modelCall:async()=>({value:{ok:true},model:'SYNTHETIC',cost:{known:true,cny:0.001}})});
+ app.store.setProvider('glm',secret);const user=app.store.user(cookie.slice(14)),id=app.store.createJob(user.id,{text:'The cost was disputed.'},'glm');app.store.updateJob(id,'running','Synthetic');
+ const a=app.store.reserveCall(id,'known','glm',0.2);app.store.finishCall(a,{model:'SYNTHETIC',cost:{known:true,cny:0.125},latencyMs:1});
+ const b=app.store.reserveCall(id,'unknown','glm',0.05);app.store.finishCall(b,null);
+ const result={body:'The cost was disputed.',quality:'needs-rework',deliveryAuthorized:false,reviewResults:{rules:{execution:{settings:'独立请求；固定端点；JSON校验；有界输出与费用'}}}};app.store.updateJob(id,'completed','待返修','',result);
+ const projected=structuredClone(result);projected.reviewResults.rules.execution.settings='独立请求；固定端点；JSON校验；有界输出与调用';
+ const forbidden=new Set(['cost','reserved','usage','usage_json','unknownUsage','unknown_usage','maxCostPerModel']);
+ function check(value){if(!value||typeof value!=='object')return;for(const[key,item]of Object.entries(value)){assert.ok(!forbidden.has(key),key);check(item);}}
+ for(const path of ['/api/session','/api/jobs','/api/jobs/'+id,'/api/jobs/'+id+'/report']){const response=await request(path,{cookie});assert.equal(response.status,200);const data=await response.json();check(data);if(data.result)assert.deepEqual(data.result,projected);if(data.job?.result)assert.deepEqual(data.job.result,projected);}
+ const ping=await request('/api/admin/providers/glm/test',{method:'POST',cookie});assert.equal(ping.status,200);check(await ping.json());
+ assert.equal(app.store.internalJob(id).cost,0.175);assert.equal(app.store.internalJob(id).unknown_usage,1);assert.deepEqual(app.store.internalJob(id).result,result);assert.equal(app.store.callsFor(id)[0].usage.cost.cny,0.125);assert.equal(app.store.db.prepare('SELECT cost FROM admin_calls').get().cost,0.001);
+ for(const detail of ['job-budget-or-call-limit','daily-api-budget-limit','provider-timeout']){const blocked=app.store.createJob(user.id,{text:'Synthetic'},'glm');app.store.updateJob(blocked,'failed','本轮未完成',detail);const data=await(await request('/api/jobs/'+blocked,{cookie})).json();assert.doesNotMatch(data.job.detail,/费用|金额|[¥￥]/);}
+ for(const path of ['/','/app.js']){const text=await(await request(path)).text();assert.doesNotMatch(text,/result-cost|maxCostPerModel|费用|[¥￥]/);}
 });
