@@ -215,14 +215,15 @@
               <div class="progress-heading"><span class="spinner" aria-hidden="true"></span><span class="eyebrow">正在处理</span></div>
               <h2 id="progress-title">正在读取文书</h2>
               <p id="progress-detail" class="muted" role="status" aria-live="polite">进度更新后会显示在这里。</p>
-              <ol id="progress-list" class="progress-list"></ol>
+              <details id="progress-history" class="progress-history" open><summary>查看处理过程</summary><ol id="progress-list" class="progress-list"></ol></details>
             </section>
 
             <section id="result-panel" class="card result-panel" hidden aria-label="文书处理结果">
               <div class="result-heading">
-                <div><span class="eyebrow">本次结果</span><h2>阅读与核对</h2></div>
+                <div><span class="eyebrow">本次结果</span><h2 id="result-title">本次正文</h2></div>
                 <span id="result-status" class="status-badge">待审阅</span>
               </div>
+              <p id="result-summary" class="result-summary" role="status"></p>
               <div class="result-meta"><span id="result-model">模型信息待更新</span></div>
               <div class="result-tabs" role="tablist" aria-label="结果内容">
                 <button id="draft-tab" class="result-tab active" type="button" role="tab" aria-selected="true" aria-controls="draft-content" data-result-tab="draft">文书正文</button>
@@ -235,7 +236,7 @@
                 <div id="changes-content" class="changes-content" role="tabpanel" aria-labelledby="changes-tab" tabindex="0" hidden></div>
               </div>
               <div class="result-actions">
-                <a id="download-btn" class="button button-primary" href="#" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5"/></svg>下载待审稿</a>
+                <a id="download-btn" class="button button-primary" href="#" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5"/></svg>下载本次正文</a>
                 <button id="copy-btn" class="button button-secondary" type="button">复制正文</button>
               </div>
               <p class="result-footnote">采用前请核对题目、事实与作者声音。审核说明不进入正文文件。</p>
