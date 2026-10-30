@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-10-30 完成结果与审核状态分离
+
+- 已完成的任务直接展示本次正文并提供复制、下载，主状态明确处理完成，审核待修改/未核和检查失败单列。停止转圈、折叠处理过程，切任务默认正文，丢弃旧轮询回包。
+- 空结果、已停止、仅审阅原稿和研究记录分别显示，不把审核未通过改成合规通过；旧任务与模型调用记录不改、不重跑。
+
 - Set the per-model job budget to CNY 10 and keep monetary accounting server-side. Remove price and budget fields from browser responses, including historical results and downloadable review records, while retaining source monetary text and existing daily limits.
 
 ## 0.4.0-preview.1

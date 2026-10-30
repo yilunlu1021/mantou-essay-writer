@@ -324,3 +324,9 @@ input[type="number"] { appearance: textfield; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Task completion and review findings are separate. */
+.result-summary { margin:0; padding:0 25px 14px; color:var(--muted); font-size:12px; line-height:1.8; }
+.progress-history { margin-top:14px; font-size:12px; color:var(--muted); }
+.progress-history summary { cursor:pointer; }
+.progress-history .progress-list { margin-top:10px; }
