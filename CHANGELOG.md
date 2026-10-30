@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-30 完成结果展示修复
+
+- 分开任务完成与审核状态，直接展示本次正文、复制和下载；完成停止转圈，切任务默认正文并丢弃旧轮询回包。保留待修改/未核和未完成审核提示，空正文、已停止、研究或仅审阅不伪称新稿。稳定站三静态热修另见PR #3；本分支同步展示行为，研究功能仍未部署。
+
 ## Unreleased: isolated student research preview
 
 - Add explicit student membership, manually accumulated source files and immutable material versions/status audit. Each task binds an explicit same-student snapshot; switching students clears original text, attachment and stale async results.
