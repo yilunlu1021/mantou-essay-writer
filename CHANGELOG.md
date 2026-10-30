@@ -1,5 +1,22 @@
 # Changelog
 
+## Production agent activation
+
+- Add an explicit production agent mode with the existing company login, preserved legacy jobs and additive student tables. Keep preview isolation separate; production refuses preview data and requires an explicit runtime before Store starts.
+- Validate pinned Harness packages and runtime assets at startup, bound child memory and default agent job concurrency to one. A research-off fallback retains student ACL and the usage ledger. The writing policy stays at the existing 1.22 release.
+
+## 2026-10-30 完成结果展示修复
+
+- 分开任务完成与审核状态，直接展示本次正文、复制和下载；完成停止转圈，切任务默认正文并丢弃旧轮询回包。保留待修改/未核和未完成审核提示，空正文、已停止、研究或仅审阅不伪称新稿。稳定站三静态热修另见PR #3；本分支同步展示行为，研究功能仍未部署。
+
+## Unreleased: isolated student research preview
+
+- Add explicit student membership, manually accumulated source files and immutable material versions/status audit. Each task binds an explicit same-student snapshot; switching students clears original text, attachment and stale async results.
+- Run pinned official DeepSeek Harness CLI/SDK 0.2.1-rc.5 with three fixed brokered tools. Research uses real independent Search/Fetch and exact source excerpts; provider keys stay outside the child. Cancellation, revocation, final stop reason and known/unknown billing are independent controls.
+- Keep research-only plans separate from existing seven-review writing workflows. Preserve unresolved source/year/campus applicability, remove invalid quotes and never promote adopted drafts into confirmed facts.
+- Keep preview data, accounts, cookies and process separate. This branch is a local preview and does not deploy or modify the current production release.
+
+
 - Set the per-model job budget to CNY 10 and keep monetary accounting server-side. Remove price and budget fields from browser responses, including historical results and downloadable review records, while retaining source monetary text and existing daily limits.
 
 ## 0.4.0-preview.1

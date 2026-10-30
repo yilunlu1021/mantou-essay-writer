@@ -74,6 +74,7 @@
         <nav class="main-nav" aria-label="工作台导航">
           <button id="new-task-btn" class="nav-button active" type="button" aria-current="page">新建任务</button>
           <button id="history-btn" class="nav-button" type="button">历史任务</button>
+          <button id="students-btn" class="nav-button" type="button" hidden>学生与素材</button>
           <button id="settings-btn" class="nav-button" type="button" hidden>管理设置</button>
         </nav>
         <div class="account-menu">
@@ -98,6 +99,13 @@
         <div class="workspace-grid">
           <section class="card input-card" aria-label="文书与修改要求">
             <form id="task-form" method="post">
+              <section id="student-task-fields" hidden>
+                <div class="form-row"><div class="field"><label for="student-search">查找学生</label><input id="student-search" type="search" placeholder="输入姓名或届别"></div><div class="field"><label for="student-select">本次学生</label><select id="student-select"><option value="">暂不绑定学生</option></select></div></div>
+                <div class="field"><label>本轮参考素材</label><div id="task-materials" class="field-note">选择学生后，可参考本人资料库。</div></div>
+                <div class="form-row"><div class="field"><label for="target-school">目标学校</label><input id="target-school" maxlength="160" placeholder="填写后自动研究学校资料"></div><div class="field"><label for="target-program">申请项目／专业</label><input id="target-program" maxlength="160" placeholder="例如：本科转学 · Economics"></div></div>
+                <div class="field"><label for="application-year">申请年度</label><input id="application-year" maxlength="40" placeholder="例如：2027 Fall"></div>
+                <p class="field-note">学校资料会联网查找并单独留来源；本人经历只取自原稿与所选素材。</p>
+              </section>
               <div class="field title-field">
                 <label for="title">任务名称 <span class="optional">选填</span></label>
                 <input id="title" name="title" type="text" placeholder="例如：姓名 · USC 小文书" maxlength="160">
@@ -151,6 +159,7 @@
                     <option value="edit">润色，保留原稿</option>
                     <option value="review">只审阅，不修改</option>
                     <option value="revision">调整结构，允许重排段落</option>
+                    <option value="research" data-research-mode hidden>学校研究与本人素材选材</option>
                   </select>
                 </div>
                 <div class="field">
@@ -215,14 +224,15 @@
               <div class="progress-heading"><span class="spinner" aria-hidden="true"></span><span class="eyebrow">正在处理</span></div>
               <h2 id="progress-title">正在读取文书</h2>
               <p id="progress-detail" class="muted" role="status" aria-live="polite">进度更新后会显示在这里。</p>
-              <ol id="progress-list" class="progress-list"></ol>
+              <details id="progress-history" class="progress-history" open><summary>查看处理过程</summary><ol id="progress-list" class="progress-list"></ol></details>
             </section>
 
             <section id="result-panel" class="card result-panel" hidden aria-label="文书处理结果">
               <div class="result-heading">
-                <div><span class="eyebrow">本次结果</span><h2>阅读与核对</h2></div>
+                <div><span class="eyebrow">本次结果</span><h2 id="result-title">本次正文</h2></div>
                 <span id="result-status" class="status-badge">待审阅</span>
               </div>
+              <p id="result-summary" class="result-summary" role="status"></p>
               <div class="result-meta"><span id="result-model">模型信息待更新</span></div>
               <div class="result-tabs" role="tablist" aria-label="结果内容">
                 <button id="draft-tab" class="result-tab active" type="button" role="tab" aria-selected="true" aria-controls="draft-content" data-result-tab="draft">文书正文</button>
@@ -235,7 +245,7 @@
                 <div id="changes-content" class="changes-content" role="tabpanel" aria-labelledby="changes-tab" tabindex="0" hidden></div>
               </div>
               <div class="result-actions">
-                <a id="download-btn" class="button button-primary" href="#" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5"/></svg>下载待审稿</a>
+                <a id="download-btn" class="button button-primary" href="#" download><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5"/></svg>下载本次正文</a>
                 <button id="copy-btn" class="button button-secondary" type="button">复制正文</button>
               </div>
               <p class="result-footnote">采用前请核对题目、事实与作者声音。审核说明不进入正文文件。</p>
@@ -285,6 +295,26 @@
             <div id="staff-list" class="staff-list" aria-live="polite"></div>
           </section>
         </div>
+      </section>
+      <section id="students-view" class="secondary-view" hidden aria-labelledby="students-title">
+        <div class="page-heading"><div><span class="eyebrow">持续积累</span><h1 id="students-title">学生与素材</h1><p>本人历稿、经历与顾问反馈分别保存，供后续文书检索和对照。</p></div></div>
+        <p id="library-status" role="status" class="field-note"></p>
+        <div class="settings-grid">
+          <section class="card settings-card">
+            <h2>添加学生</h2><form id="student-form"><div class="field"><label for="student-name">姓名</label><input id="student-name" name="name" maxlength="80" required></div><div class="field"><label for="student-cohort">届别</label><input id="student-cohort" name="cohort" maxlength="40"></div><div class="field"><label for="student-notes">备注</label><textarea id="student-notes" name="notes" maxlength="2000" rows="2"></textarea></div><button class="button button-primary" type="submit">添加学生</button></form>
+            <hr><div class="field"><label for="library-student">查看学生</label><select id="library-student"><option value="">请选择学生</option></select></div>
+            <div id="student-sharing" hidden><h3>授权顾问</h3><p class="field-note">管理员可选择哪些员工能查看和维护该学生素材。</p><div id="student-members"></div><button id="save-student-members" class="button button-secondary button-small" type="button">保存顾问授权</button></div>
+          </section>
+          <section class="card settings-card"><h2>添加素材／新版本</h2>
+            <form id="material-form"><input id="material-previous" type="hidden" name="previousId"><div class="field"><label for="material-title">素材标题</label><input id="material-title" name="title" maxlength="120" required></div>
+              <div class="form-row"><div class="field"><label for="material-kind">类型</label><select id="material-kind" name="kind"><option value="draft">文书历稿</option><option value="facts">经历与事实</option><option value="interview">访谈记录</option><option value="feedback">顾问反馈</option></select></div><div class="field"><label for="material-status">来源状态</label><select id="material-status" name="status"><option value="pending">待核对</option><option value="confirmed">已核对，可作来源</option><option value="adopted">顾问采用稿</option><option value="excluded">本素材不采用</option></select></div></div>
+              <div class="field"><label for="material-file">上传原文件（Word／TXT／Markdown）</label><input id="material-file" type="file" accept=".docx,.txt,.md"></div>
+              <div class="field"><label for="material-body">素材正文</label><textarea id="material-body" name="body" maxlength="60000" rows="8" required></textarea></div><div class="field"><label for="material-school">相关学校</label><input id="material-school" name="school" maxlength="160"></div><div class="field"><label for="material-prompt">原题目</label><textarea id="material-prompt" name="prompt" rows="2" maxlength="10000"></textarea></div>
+              <p class="field-note">采用稿不等于事实已核对。新增版本保留旧原文；生成内容需顾问确认后才能成为已核对来源。</p><button class="button button-primary" type="submit">保存素材</button><button id="clear-material-version" class="button button-secondary" type="button">取消新版本</button>
+            </form>
+          </section>
+        </div>
+        <section class="card settings-card"><h2>该学生的素材</h2><div id="material-list" class="history-list"></div></section>
       </section>
     </main>
     <footer class="app-footer"><span>满托文书工作台</span><span>保留原稿，按本次要求修改。</span></footer>
