@@ -29,7 +29,7 @@ export async function callModel({provider,key,system,user,phase='review',employe
   const thinking=provider==='glm'||phase==='logic';
   const body={model:p.model,messages:[{role:'system',content:system},{role:'user',content:typeof user==='string'?user:JSON.stringify(user)}],
     response_format:{type:'json_object'},stream:false,max_tokens:maxTokens,
-    thinking:{type:thinking?'enabled':'disabled'},...(thinking?{reasoning_effort:phase==='logic'?'high':'low'}:{temperature:0.6})};
+    thinking:{type:thinking?'enabled':'disabled'},...(thinking?{reasoning_effort:'low'}:{temperature:0.6})};
   if(provider==='glm'){body.temperature=1;body.top_p=0.95;}
   else {body.user_id=employeeId;if(thinking)body.top_p=0.95;}
   const started=Date.now();let response;

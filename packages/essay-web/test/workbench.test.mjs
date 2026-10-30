@@ -61,6 +61,7 @@ test('the provider adapter fixes endpoints, sends standard keys only as headers 
  const r=await callModel({provider:'glm',key:secret,system:'Return JSON',user:{task:'synthetic'},employeeId:'non-pii-id',fetchImpl:fake,maxTokens:1000});assert.equal(r.value.ok,true);assert.equal(request.url,PROVIDERS.glm.url);
  const payload=JSON.parse(request.body);assert.equal(payload.thinking.type,'enabled');assert.equal(payload.max_tokens,1000);assert.equal(payload.model,'glm-5.3-flash');assert.ok(!request.body.includes(secret));
  await assert.rejects(callModel({provider:'https://example.com',key:secret,system:'',user:'',fetchImpl:fake}),/invalid-provider/);
+ await callModel({provider:'deepseek',key:secret,system:'JSON',user:'Synthetic logic check',phase:'logic',maxTokens:16384,fetchImpl:fake});const logic=JSON.parse(request.body);assert.equal(logic.thinking.type,'enabled');assert.equal(logic.reasoning_effort,'low');assert.equal(logic.max_tokens,16384);
 });
 test('truncation and malformed JSON do not hide billed usage',async()=>{
  let charged=0;const fake=async()=>new Response(JSON.stringify({usage:{prompt_tokens:10,completion_tokens:100},choices:[{finish_reason:'length',message:{content:'{}'}}]}));
@@ -74,6 +75,18 @@ test('Unicode references expand exactly; unknown, prototype and ambiguous eviden
  assert.throws(()=>expandReferences({$quote:'I closed the door.',blockId:'p1'},pack.catalog,document,original),/not-unique/);
  assert.deepEqual(expandReferences({$quote:'The wall was blue.',blockId:'p1',source:'original'},pack.catalog,document,original),{blockId:'p1',start:0,end:18,quote:'The wall was blue.'});
  const bound=bindMetadata({status:'unverified',reason:''},{bindings:{current:'hash'},catalogHash:'a',schemaVersion:'v'});assert.equal(bound.status,'unverified');assert.equal(bound.reason,'');assert.ok(!('checks'in bound));
+});
+test('exact quoted evidence derives offsets in its declared source without changing text or judgments',()=>{
+ const document={revision:'v1',blocks:[{id:'p1',text:'😀 New text. A repeated word: word.'}]},original={revision:'o1',blocks:[{id:'p1',text:'Old text.'}]};
+ const pack=referencePack({passages:[{candidate:{blockId:'p1',start:0,end:11,quote:'😀 New text.'},sources:[{blockId:'p1',start:0,end:9,quote:'Old text.'}]}]},document,original);
+ const originalRef=pack.value.passages[0].sources[0].$ref;assert.equal(pack.catalog[originalRef].source,'original');
+ const raw={status:'FAIL',reason:'Keep this unresolved judgment.',passages:[{candidate:{blockId:'p1',start:100,end:110,quote:'😀 New text.'},sources:[{blockId:'p1',start:4,end:80,quote:'Old text.'}]}],omissions:[{source:{blockId:'p1',start:0,end:999,quote:'Old text.'},reason:'Declared omission.'}],evidence:[{kind:'original',span:{blockId:'p1',start:999,end:1000,quote:'Old text.'}}]};
+ const result=expandReferences(raw,pack.catalog,document,original);assert.equal(result.status,'FAIL');assert.equal(result.reason,raw.reason);assert.equal(result.passages[0].candidate.start,0);assert.equal(result.passages[0].candidate.end,11);assert.equal(result.passages[0].sources[0].end,9);assert.equal(result.omissions[0].source.end,9);assert.equal(result.evidence[0].span.end,9);
+ assert.throws(()=>expandReferences({blockId:'p1',start:0,end:4,quote:'word'},pack.catalog,document,original),/not-unique/);
+ assert.throws(()=>expandReferences({blockId:'p1',start:0,end:8,quote:'New claim.'},pack.catalog,document,original),/not-unique/);
+ assert.throws(()=>expandReferences({sources:[{blockId:'p1',start:0,end:9,quote:'New text.'}]},pack.catalog,document,original),/not-unique/);
+ assert.equal(expandReferences({blockId:'p1',start:23,end:27,quote:'word'},pack.catalog,document,original).start,23);
+ assert.deepEqual(expandReferences({promptSpan:{start:99,end:100,quote:'Describe the scene.'}},pack.catalog,document,original,'Describe the scene.').promptSpan,{start:0,end:19,quote:'Describe the scene.'});
 });
 async function httpFixture(t){const dir=await mkdtemp(join(tmpdir(),'essay-http-'));const origin='http://127.0.0.1:8787';const app=await createWorkbench({dataDir:dir,origin,policyRoot:resolve('../essay-writer'),publicDir:resolve('public'),bootstrapPassword:secret,
  modelCall:async()=>{throw new Error('SYNTHETIC-STOP-NO-LIVE-MODEL');}});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const url='http://127.0.0.1:'+app.server.address().port;

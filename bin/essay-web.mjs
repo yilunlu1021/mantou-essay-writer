@@ -24982,7 +24982,7 @@ async function callModel({ provider, key, system, user, phase = "review", employ
     stream: false,
     max_tokens: maxTokens,
     thinking: { type: thinking ? "enabled" : "disabled" },
-    ...thinking ? { reasoning_effort: phase === "logic" ? "high" : "low" } : { temperature: 0.6 }
+    ...thinking ? { reasoning_effort: "low" } : { temperature: 0.6 }
   };
   if (provider === "glm") {
     body.temperature = 1;
@@ -25014,6 +25014,7 @@ async function callModel({ provider, key, system, user, phase = "review", employ
 
 // packages/essay-web/src/references.mjs
 init_dist();
+var originFor = (key, parent, current) => key === "sources" || key === "originalAnchors" || key === "source" && parent === "omissions" ? "original" : current;
 function referencePack(value2, document, original) {
   const catalog2 = {}, seen = /* @__PURE__ */ new Map();
   let seq = 0;
@@ -25026,6 +25027,7 @@ function referencePack(value2, document, original) {
     return id2;
   };
   for (const [source2, doc] of [["document", document], ["original", original]]) for (const b of doc.blocks) {
+    if (!b.text.trim()) continue;
     remember({ blockId: b.id, start: 0, end: Array.from(b.text).length, quote: b.text }, source2);
     for (const part of new Intl.Segmenter("en", { granularity: "sentence" }).segment(b.text)) {
       const quote = part.segment.trim();
@@ -25034,34 +25036,44 @@ function referencePack(value2, document, original) {
       remember({ blockId: b.id, start, end: start + Array.from(quote).length, quote }, source2);
     }
   }
-  const walk = (v) => {
-    if (Array.isArray(v)) return v.map(walk);
+  const walk = (v, source2 = "document", parent = "") => {
+    if (Array.isArray(v)) return v.map((x2) => walk(x2, source2, parent));
     if (v && typeof v === "object") {
-      if (typeof v.blockId === "string" && Number.isInteger(v.start) && Number.isInteger(v.end) && typeof v.quote === "string") return { $ref: remember(v) };
-      return Object.fromEntries(Object.entries(v).map(([k, x2]) => [k, walk(x2)]));
+      if (typeof v.blockId === "string" && Number.isInteger(v.start) && Number.isInteger(v.end) && typeof v.quote === "string") return { $ref: remember(v, source2) };
+      return Object.fromEntries(Object.entries(v).map(([k, x2]) => [k, walk(x2, v.kind === "original" ? "original" : originFor(k, parent, source2), k)]));
     }
     return v;
   };
   return { value: walk(value2), catalog: catalog2 };
 }
-function expandReferences(value2, catalog2, document, original) {
-  const walk = (v) => {
-    if (Array.isArray(v)) return v.map(walk);
+function expandReferences(value2, catalog2, document, original, prompt) {
+  const locate = (v, text4, quote) => {
+    if (typeof quote !== "string" || !quote.trim()) throw new Error("invalid-evidence-quote");
+    const chars = Array.from(text4);
+    if (Number.isInteger(v.start) && Number.isInteger(v.end) && v.start >= 0 && v.end > v.start && v.end <= chars.length && chars.slice(v.start, v.end).join("") === quote)
+      return { start: v.start, end: v.end, quote };
+    const index = text4.indexOf(quote);
+    if (index < 0 || text4.indexOf(quote, index + 1) >= 0) throw new Error("evidence-quote-not-unique");
+    const start = Array.from(text4.slice(0, index)).length;
+    return { start, end: start + Array.from(quote).length, quote };
+  };
+  const exact = (v, source2, quote) => {
+    const doc = source2 === "original" ? original : document, b = doc.blocks.find((b2) => b2.id === v.blockId);
+    if (!b) throw new Error("invalid-evidence-quote");
+    return { blockId: b.id, ...locate(v, b.text, quote) };
+  };
+  const walk = (v, source2 = "document", parent = "") => {
+    if (Array.isArray(v)) return v.map((x2) => walk(x2, source2, parent));
     if (v && typeof v === "object") {
       if ("$ref" in v) {
         if (typeof v.$ref !== "string" || !/^a\d+$/.test(v.$ref) || !Object.hasOwn(catalog2, v.$ref)) throw new Error("unknown-evidence-reference");
-        const { source: source2, ...span2 } = catalog2[v.$ref];
+        const { source: source3, ...span2 } = catalog2[v.$ref];
         return span2;
       }
-      if ("$quote" in v) {
-        const doc = v.source === "original" ? original : document, b = doc.blocks.find((b2) => b2.id === v.blockId), quote = v.$quote;
-        if (!b || typeof quote !== "string" || !quote.trim()) throw new Error("invalid-evidence-quote");
-        const index = b.text.indexOf(quote);
-        if (index < 0 || b.text.indexOf(quote, index + 1) >= 0) throw new Error("evidence-quote-not-unique");
-        const start = Array.from(b.text.slice(0, index)).length;
-        return { blockId: b.id, start, end: start + Array.from(quote).length, quote };
-      }
-      return Object.fromEntries(Object.entries(v).map(([k, x2]) => [k, walk(x2)]));
+      if ("$quote" in v) return exact(v, v.source ?? source2, v.$quote);
+      if (typeof v.blockId === "string" && typeof v.quote === "string") return { ...v, ...exact(v, source2, v.quote) };
+      if (parent === "promptSpan" && typeof prompt === "string") return { ...v, ...locate(v, prompt, v.quote) };
+      return Object.fromEntries(Object.entries(v).map(([k, x2]) => [k, walk(x2, v.kind === "original" ? "original" : originFor(k, parent, source2), k)]));
     }
     return v;
   };
@@ -25094,7 +25106,7 @@ var taskSchema = external_exports.object({
 }).strict();
 var draftSchema = external_exports.object({ body: external_exports.string().min(1).max(12e4), changes: external_exports.array(external_exports.string().max(2e3)).max(80), openQuestions: external_exports.array(external_exports.string().max(2e3)).max(30) }).strict();
 function details(e) {
-  return e?.issues ? e.issues.slice(0, 8).map((i2) => ({ path: i2.path, message: i2.message })) : String(e.code ?? e.message ?? "review-invalid").slice(0, 200);
+  return e?.issues ? e.issues.slice(0, 8).map((i2) => ({ path: i2.path, message: i2.message })) : { code: String(e.code ?? "review-invalid"), message: String(e.message ?? "review-invalid").slice(0, 500) };
 }
 function stripMeta(template) {
   return Object.fromEntries(Object.entries(template).filter(([k]) => !metadata(k)));
@@ -25145,7 +25157,7 @@ var Pipeline = class {
     if (!current || current.state === "cancelled") throw new Error("job-cancelled");
     this.store.updateJob(id2, "running", label, detail);
   }
-  async ask(job, phase, payload, schema, { maxTokens = 12288 } = {}) {
+  async ask(job, phase, payload, schema, { maxTokens = phase === "logic" ? 16384 : 12288 } = {}) {
     const policy = await this.policyPromise, key = this.store.providerKey(job.provider);
     if (!key) throw new Error("provider-not-configured");
     const system = `\u4F60\u662F\u6EE1\u6258\u6587\u4E66\u5DE5\u4F5C\u53F0\u7684\u81EA\u52A8\u7F16\u8F91\u4E0E\u5BA1\u9605\u670D\u52A1\u3002\u8F93\u51FA\u5FC5\u987B\u662FJSON\u5BF9\u8C61\uFF0C\u4E0D\u542BMarkdown\u6216\u63A8\u7406\u8FC7\u7A0B\u3002
@@ -25155,7 +25167,7 @@ var Pipeline = class {
 ${this.sourceDocuments.join("\n\n")}
 \u89C4\u5219\u767B\u8BB0\uFF1A
 ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requirement: r.requirement, terms: r.terms })))}`;
-    const user = { task: { instructions: job.input.instructions, prompt: job.input.prompt, mode: job.input.mode }, phase, ...payload, jsonSchema: schema };
+    const user = { task: { instructions: job.input.instructions, prompt: job.input.prompt, mode: job.input.mode }, recordFormat: "\u53EA\u8F93\u51FA\u5B57\u6BB5\u8981\u6C42\u7684\u5224\u65AD\uFF0C\u7406\u7531\u901A\u5E381-2\u53E5\uFF0C\u4E0D\u590D\u8FF0\u653F\u7B56\u3002\u5F15\u7528\u4F18\u5148\u4F7F\u7528\u7ED9\u5B9A$ref\uFF1B\u65B0\u5F15\u6587\u9010\u5B57\u51C6\u786E\u5373\u53EF\uFF0C\u504F\u79FB\u7531\u7A0B\u5E8F\u6838\u5BF9\uFF0C\u4E0D\u4F30\u7B97\u4F4D\u7F6E\u3002", phase, ...payload, jsonSchema: schema };
     const reservation = ((Buffer.byteLength(system) + Buffer.byteLength(JSON.stringify(user)) + 4e3) * PROVIDERS[job.provider].price.input + maxTokens * PROVIDERS[job.provider].price.output) / 1e6;
     const callId = this.store.reserveCall(job.id, phase, job.provider, reservation, { maxCost: this.maxCost, maxCalls: 36 });
     let recorded = false;
@@ -25197,20 +25209,25 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
         return await validate2(value2);
       } catch (e) {
         error51 = details(e);
+        await writeFile(join3(job.folder, `invalid-${phase}-${Date.now()}-${attempt}.json`), JSON.stringify({ value: value2, error: error51 }, null, 2), { mode: 384 });
         if (attempt === 1) throw e;
       }
     }
   }
   async draft(job, sessionPath, diagnosis, repair) {
     const session = await loadSession(this.policyRoot, sessionPath);
+    const englishApplication2 = ["en", "mixed"].includes(session.manifest.context.language) && ["personal-narrative", "application-explanatory"].includes(session.manifest.context.genre);
     const output = await this.validated(job, repair ? "repair" : "draft", {
       instruction: repair ? "\u53EA\u4FEE\u590D\u5DF2\u6709\u590D\u6838\u4E2D\u7684\u660E\u786E\u95EE\u9898\uFF0C\u4FDD\u7559\u539F\u7A3F\u4E8B\u5B9E\u548C\u4F5C\u8005\u58F0\u97F3\uFF1B\u7F3A\u7D20\u6750\u4E0D\u5F97\u7F16\u9020\u3002" : "\u6309\u9898\u76EE\u53CA\u987E\u95EE\u8981\u6C42\u4FEE\u6539\u3002\u5FC5\u8981\u76F4\u8FF0\u3001\u76F8\u90BBSVO\u3001\u65F6\u95F4\u548C\u56E0\u679C\u4ECE\u53E5\u53EF\u4FDD\u7559\uFF0C\u52FF\u673A\u68B0\u5C06-ing\u6539to\u3002\u8FD4\u56DE\u5B8C\u6574\u6B63\u6587\uFF0C\u9898\u76EE\u4E0E\u8BF4\u660E\u4E0D\u8981\u653E\u5165body\u3002",
       context: session.manifest.context,
       original: session.original,
       document: session.document,
       diagnosis,
-      repair: repair ?? null
+      repair: repair ?? null,
+      lengthRequirement: job.input.maxWords ? { unit: job.input.language === "en" ? "english-words" : "han-characters", minimum: job.input.maxWords - 15, maximum: job.input.maxWords, sourceMetrics: countText(job.input.text), instruction: "\u4EE5\u6709\u6765\u6E90\u7684\u4FE1\u606F\u6EE1\u8DB3\u8303\u56F4\uFF0C\u4E0D\u4EE5\u590D\u8FF0\u6216\u865A\u6784\u8865\u5B57\uFF1B\u5185\u5BB9\u786E\u5B9E\u4E0D\u8DB3\u987B\u5728openQuestions\u8BF4\u660E\u3002" } : null,
+      languageFocus: englishApplication2 ? ["\u4FDD\u7559\u539F\u7A3F\u58F0\u97F3\u548C\u672C\u4EBA\u5E94\u5BF9\uFF0C\u5FC5\u8981\u76F4\u8FF0\u53CA\u771F\u5B9E\u65F6\u95F4/\u56E0\u679C\u5173\u7CFB\u53EF\u7559\u3002", "\u82F1\u6587\u7533\u8BF7\u6B63\u6587\u7981\u6B62\u540E\u7F6E\u5173\u7CFB\u4ECE\u53E5\uFF0C\u542B\u7701\u7565\u5173\u7CFB\u8BCD\uFF1B\u7981\u6B62\u5FC3\u7406\u62A5\u544A\u6846\u67B6\u548C\u4E09\u9879\u540C\u5C42\u5E76\u5217\u3002", "\u52A8\u8BCD\u6027-ing\u53EA\u51C6\u6709\u6765\u6E90\u7684\u771F\u5B9E\u73B0\u5728/\u8FC7\u53BB\u8FDB\u884C\uFF0C\u6D3B\u52A8\u6216\u4E8B\u4EF6\u540D\u8BCD-ing\u4E5F\u7981\u6B62\uFF1B\u4E0D\u8981\u628A-ing\u7EDF\u4E00\u6539\u6210to\u3002", "\u5168\u90E8\u540D\u8BCD\u6027\u4ECE\u53E5\u5408\u8BA1\u72EC\u7ACB\u6309150\u8BCD\u4E0A\u9650\u6838\u5BF9\u3002\u5FC5\u8981to\u8865\u8DB3\u53EF\u7559\uFF0C\u6CA1\u6709to\u914D\u989D\u3002", "\u7ED3\u5C3E\u901A\u5E381-2\u53E5\uFF0C\u6309\u9898\u76EE\u53CA\u987E\u95EE\u8981\u6C42\u6536\u675F\uFF0C\u4E0D\u80FD\u91CD\u590D\u89E3\u91CA\u6216\u7F16\u65B0\u4E8B\u5B9E\u3002"] : []
     }, external_exports.toJSONSchema(draftSchema), (v) => draftSchema.parse(v));
+    if (output.body === session.document.blocks.map((b) => b.text).filter((t) => t.trim()).join("\n\n")) return { ...output, changes: [] };
     const blocks = session.document.blocks, patches = blocks.map((b, i2) => ({
       blockId: b.id,
       start: 0,
@@ -25226,34 +25243,38 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
     const s = await loadSession(this.policyRoot, sessionPath), raw = {}, results = {}, errors = {};
     const prepared2 = await prepareRuleReview(this.policyRoot, sessionPath), rule = structuredClone(prepared2.template);
     const checks = [];
-    for (let start = 0; start < prepared2.cards.length; start += 24) {
-      this.stage(job.id, "\u9010\u9879\u6838\u5BF9\u5199\u4F5C\u89C4\u5219", `\u5DF2\u6838\u5BF9 ${start} / ${prepared2.cards.length} \u4E2A\u68C0\u67E5\u5355\u5143`);
-      const cards = prepared2.cards.slice(start, start + 24), template = rule.checks.slice(start, start + 24), pack2 = referencePack({ checks: template }, s.document, s.original);
-      try {
-        const rows = await this.validated(
-          job,
-          "rules-" + start,
-          {
-            instruction: "\u9010\u9879\u72EC\u7ACB\u5224\u5B9A\u8FD9\u4E9B\u68C0\u67E5\u5355\u5143\u53CA\u5176\u5168\u90E8\u5B50\u8981\u6C42\u3002\u8FD4\u56DEchecks\uFF0CcheckId\u987A\u5E8F\u4FDD\u6301\u3002\u9700\u8981\u5F53\u524D\u8BC1\u636E\u548C\u5177\u4F53\u7406\u7531\uFF1B\u4E0D\u80FD\u4E00\u5F8BPASS\u3001\u7A7A\u7406\u7531\u6216\u7B3C\u7EDFprocess\u58F0\u660E\u3002\u53EF\u7528\u51C6\u786E$ref\u5F15\u7528\u76EE\u5F55\u4E2D\u7684\u539F\u7A3F/\u6B63\u6587\uFF0Ckind\u5FC5\u987B\u5BF9\u5E94\u6765\u6E90\u3002\u5143\u6570\u636ErequirementHash\u53EF\u7167\u6A21\u677F\u4FDD\u7559\u3002",
-            cards,
-            template: pack2.value,
-            evidenceCatalog: pack2.catalog,
-            context: s.manifest.context,
-            original: s.original,
-            document: s.document
-          },
-          { type: "object", required: ["checks"], properties: { checks: external_exports.toJSONSchema(ruleReviewSchema).properties.checks } },
-          (value2) => {
-            const expanded = expandReferences(value2, pack2.catalog, s.document, s.original);
-            if (!Array.isArray(expanded.checks) || expanded.checks.length !== template.length || expanded.checks.some((r, i2) => r.checkId !== template[i2].checkId)) throw new Error("rule-batch-coverage");
-            return ruleReviewSchema.shape.checks.parse(expanded.checks.map((r, i2) => ({ ...r, requirementHash: template[i2].requirementHash })));
-          }
-        );
-        checks.push(...rows);
-      } catch (e) {
-        errors["rules-" + start] = details(e);
-        checks.push(...template);
-      }
+    for (let group = 0; group < prepared2.cards.length; group += 48) {
+      const offsets = [group, group + 24].filter((start) => start < prepared2.cards.length);
+      const batches = await Promise.all(offsets.map(async (start) => {
+        this.stage(job.id, "\u9010\u9879\u6838\u5BF9\u5199\u4F5C\u89C4\u5219", `\u5DF2\u6838\u5BF9 ${start} / ${prepared2.cards.length} \u4E2A\u68C0\u67E5\u5355\u5143`);
+        const cards = prepared2.cards.slice(start, start + 24), template = rule.checks.slice(start, start + 24), pack2 = referencePack({ checks: template }, s.document, s.original);
+        try {
+          const rows = await this.validated(
+            job,
+            "rules-" + start,
+            {
+              instruction: "\u9010\u9879\u72EC\u7ACB\u5224\u5B9A\u8FD9\u4E9B\u68C0\u67E5\u5355\u5143\u53CA\u5176\u5168\u90E8\u5B50\u8981\u6C42\u3002\u8FD4\u56DEchecks\uFF0CcheckId\u987A\u5E8F\u4FDD\u6301\u3002\u9700\u8981\u5F53\u524D\u8BC1\u636E\u548C\u5177\u4F53\u7406\u7531\uFF1B\u4E0D\u80FD\u4E00\u5F8BPASS\u3001\u7A7A\u7406\u7531\u6216\u7B3C\u7EDFprocess\u58F0\u660E\u3002\u53EF\u7528\u51C6\u786E$ref\u5F15\u7528\u76EE\u5F55\u4E2D\u7684\u539F\u7A3F/\u6B63\u6587\uFF0Ckind\u5FC5\u987B\u5BF9\u5E94\u6765\u6E90\u3002\u5143\u6570\u636ErequirementHash\u53EF\u7167\u6A21\u677F\u4FDD\u7559\u3002",
+              cards,
+              template: pack2.value,
+              evidenceCatalog: pack2.catalog,
+              context: s.manifest.context,
+              original: s.original,
+              document: s.document
+            },
+            { type: "object", required: ["checks"], properties: { checks: external_exports.toJSONSchema(ruleReviewSchema).properties.checks } },
+            (value2) => {
+              const expanded = expandReferences(value2, pack2.catalog, s.document, s.original, s.manifest.context.prompt);
+              if (!Array.isArray(expanded.checks) || expanded.checks.length !== template.length || expanded.checks.some((r, i2) => r.checkId !== template[i2].checkId)) throw new Error("rule-batch-coverage");
+              return ruleReviewSchema.shape.checks.parse(expanded.checks.map((r, i2) => ({ ...r, requirementHash: template[i2].requirementHash })));
+            }
+          );
+          return rows;
+        } catch (e) {
+          errors["rules-" + start] = details(e);
+          return template;
+        }
+      }));
+      checks.push(...batches.flat());
     }
     rule.checks = checks;
     this.stage(job.id, "\u68C0\u67E5\u53E5\u5F0F\u4E0E\u91CD\u590D\u8868\u8FBE");
@@ -25273,7 +25294,7 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
           document: s.document
         },
         { type: "object", required: ["grammar", "expression"], properties: { grammar: external_exports.toJSONSchema(ruleReviewSchema).properties.grammar, expression: external_exports.toJSONSchema(ruleReviewSchema).properties.expression } },
-        (value2) => ruleReviewSchema.pick({ grammar: true, expression: true }).parse(expandReferences(value2, pack.catalog, s.document, s.original))
+        (value2) => ruleReviewSchema.pick({ grammar: true, expression: true }).parse(expandReferences(value2, pack.catalog, s.document, s.original, s.manifest.context.prompt))
       );
       rule.grammar = grammar.grammar;
       rule.expression = grammar.expression;
@@ -25298,7 +25319,7 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
             job,
             kind,
             {
-              instruction: '\u72EC\u7ACB\u5B8C\u6574\u9605\u8BFB\u9898\u76EE\u3001\u539F\u7A3F\u53CA\u5F53\u524D\u6B63\u6587\uFF0C\u518D\u586B\u5199\u5168\u90E8\u5224\u65AD\u3001\u7406\u7531\u3001\u8BC1\u636E\u548C\u53CD\u4F8B\u3002\u4E25\u683C\u4FDD\u7559\u6240\u6709\u6A21\u677F\u6570\u7EC4\u53CA\u987A\u5E8F\u3002\u5C40\u90E8\u7F3A\u53E3\u4E0D\u80FD\u88ABadopt\u8986\u76D6\uFF1B\u7F3A\u6765\u6E90\u4FDD\u6301\u672A\u6838\u3002\u4E0D\u5F97\u4F2A\u79F0\u4EBA\u5DE5\u6279\u51C6\u3002\u5F15\u7528\u76EE\u5F55\u53EF\u7528{$ref:"a1"}\uFF0C\u65B0\u51C6\u786E\u5B50\u53E5\u53EF\u7528{$quote:"\u51C6\u786E\u5F15\u6587",blockId:"p1",source:"document"}\u3002',
+              instruction: '\u72EC\u7ACB\u5B8C\u6574\u9605\u8BFB\u9898\u76EE\u3001\u539F\u7A3F\u53CA\u5F53\u524D\u6B63\u6587\uFF0C\u518D\u586B\u5199\u5168\u90E8\u5224\u65AD\u3001\u7406\u7531\u3001\u8BC1\u636E\u548C\u53CD\u4F8B\u3002\u56FA\u5B9A\u5019\u9009ID\u3001\u5168\u90E8\u903B\u8F91\u6BB5\u3001\u7A97\u53E3\u548C\u6865\u6881\u987B\u5B8C\u6574\u4E14\u6309\u5BF9\u5E94\u987A\u5E8F\u8986\u76D6\u3002\u6765\u6E90passages\u6309\u53E5\u6216\u4E0D\u53EF\u62C6\u8BED\u4E49\u5355\u5143\u5C55\u5F00\uFF1Bsources\u3001omissions\u3001claims\u3001relations\u53CA\u5176\u4ED6\u81EA\u7531\u8BC1\u636E\u6570\u7EC4\u6309\u5B9E\u9645\u5185\u5BB9\u586B\u5199\uFF0C\u4E0D\u80FD\u628A\u7A7A\u6A21\u677F\u5F53\u514D\u67E5\uFF0C\u65E0\u9879\u987B\u7ED9schema\u8981\u6C42\u7684\u7406\u7531\u3002\u5C40\u90E8\u7F3A\u53E3\u4E0D\u80FD\u88ABadopt\u8986\u76D6\uFF1B\u7F3A\u6765\u6E90\u4FDD\u6301\u672A\u6838\u3002\u4E0D\u5F97\u4F2A\u79F0\u4EBA\u5DE5\u6279\u51C6\u3002\u5F15\u7528\u76EE\u5F55\u53EF\u7528{$ref:"a1"}\uFF0C\u65B0\u51C6\u786E\u5B50\u53E5\u53EF\u7528{$quote:"\u51C6\u786E\u5F15\u6587",blockId:"p1",source:"document"}\u3002',
               reviewInstructions: prep.instructions,
               context: s.manifest.context,
               original: s.original,
@@ -25309,7 +25330,7 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
             },
             shapeFor(schema),
             async (value2) => {
-              const record3 = bindMetadata(expandReferences(value2, pack2.catalog, s.document, s.original), prep.template);
+              const record3 = bindMetadata(expandReferences(value2, pack2.catalog, s.document, s.original, s.manifest.context.prompt), prep.template);
               if (kind === "logic") record3.reviewer = { id: job.provider + ":separate-pass", participatedInEditing: job.input.mode !== "review", independence: "separate-pass" };
               if ("reviewerRole" in record3) record3.reviewerRole = "agent";
               const result = await review(this.policyRoot, sessionPath, record3);
@@ -25366,10 +25387,10 @@ ${JSON.stringify(policy.rules.map((r) => ({ id: r.id, scope: r.scope, requiremen
         latestDraft = await this.draft(job, sessionPath, diagnosis);
       }
       reviews = await this.reviews(job, sessionPath);
-      if (job.input.mode !== "review" && reviews.summary.workflowStatus === "needs-rework" && !Object.keys(reviews.errors).length) {
+      if (job.input.mode !== "review" && reviews.summary.workflowStatus === "needs-rework") {
         this.stage(id2, "\u9488\u5BF9\u5177\u4F53\u95EE\u9898\u8FD4\u4FEE");
         try {
-          latestDraft = await this.draft(job, sessionPath, diagnosis, { results: reviews.results, raw: reviews.raw });
+          latestDraft = await this.draft(job, sessionPath, diagnosis, { results: reviews.results, raw: reviews.raw, unverified: reviews.errors });
           reviews = await this.reviews(job, sessionPath);
         } catch (e) {
           reviews.errors.repair = details(e);

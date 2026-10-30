@@ -9,6 +9,7 @@ import{Pipeline}from'../src/pipeline.mjs';
 // Entirely synthetic declarations. This checks seven real SDK contracts, never actual model prose quality.
 function syntheticRecord(user){
  if(user.phase==='diagnose')return{promptQuote:'',genre:'academic',centralAnswer:'The door is blue.',concerns:[],instructionConflicts:[],missingFacts:[]};
+ if(user.phase==='draft'||user.phase==='repair')return{body:user.document.blocks.map(b=>b.text).filter(Boolean).join('\n\n'),changes:[],openQuestions:[]};
  const r=structuredClone(user.template),catalog=user.evidenceCatalog??{},d=Object.entries(catalog).find(([,x])=>x.source==='document'),o=Object.entries(catalog).find(([,x])=>x.source==='original');
  const anchors=d?[{$ref:d[0]}]:[];
  if(user.phase.startsWith('rules-')){r.checks.forEach(c=>Object.assign(c,{status:'PASS',reason:'Synthetic bound scene description is retained.',evidence:[{kind:'document',span:anchors[0]}],authority:'',details:[{requirement:c.checkId+' synthetic contract fixture',status:'PASS',reason:'This fixture declares a review, not semantic certification.',evidence:[{kind:'document',span:anchors[0]}],authority:''}]}));return r;}
@@ -44,11 +45,24 @@ test('a synthetic full pipeline revalidates all seven actual raw SDK reviews and
  const dir=await mkdtemp(join(tmpdir(),'essay-pipeline-')),store=new Store(dir,{bootstrapPassword:'synthetic-only-password'});t.after(async()=>{store.close();await rm(dir,{recursive:true,force:true});});
  store.setProvider('glm','synthetic-only-standard-api-key');const user=store.login('admin','synthetic-only-password').user;
  const instructions='Preserve the exact source color and use a direct sentence.';
- const input={requestId:randomUUID(),text:'The door was blue.',prompt:'Describe the supplied scene.',title:'Synthetic contract fixture',instructions,mode:'review',language:'en',genre:'academic',maxWords:null};
+ const input={requestId:randomUUID(),text:'The door was blue.',prompt:'Describe the supplied scene.',title:'Synthetic contract fixture',instructions,mode:'edit',language:'en',genre:'academic',maxWords:null};
  const id=store.createJob(user.id,input,'glm'),observed=[];
  const pipeline=new Pipeline({store,policyRoot:resolve('../essay-writer'),dataRoot:dir,modelCall:async args=>{observed.push(args.user.task.instructions);return{value:syntheticRecord(args.user),model:'SYNTHETIC-CONTRACT-FIXTURE',cost:{known:true,cny:0.0001},latencyMs:1};}});
  await pipeline.run(id);const job=store.internalJob(id);assert.equal(job.state,'completed',job.detail);assert.equal(job.result.quality,'ready-for-human-review',JSON.stringify(job.result.reviewErrors));
  assert.deepEqual(job.result.workflow.reviews.map(r=>r.name),['rules','source','answer','style','linguistic','discourse','logic']);assert.ok(job.result.workflow.reviews.every(r=>r.state==='recorded'));
  assert.equal(job.result.deliveryAuthorized,false);assert.equal(job.result.workflow.factsCertified,false);assert.ok(observed.length>7&&observed.every(x=>x===instructions));
  assert.ok((await stat(join(dir,'jobs',id,'working-draft.docx'))).size>100);
+});
+test('a known answer failure is repaired even when another review is unavailable, then every new review is revalidated',async t=>{
+ const dir=await mkdtemp(join(tmpdir(),'essay-repair-')),store=new Store(dir,{bootstrapPassword:'synthetic-only-password'});t.after(async()=>{store.close();await rm(dir,{recursive:true,force:true});});
+ store.setProvider('glm','synthetic-only-standard-api-key');const user=store.login('admin','synthetic-only-password').user;
+ const input={requestId:randomUUID(),text:'The door was blue.',prompt:'Describe the supplied scene.',title:'Synthetic bounded repair',instructions:'Keep the source fact.',mode:'edit',language:'en',genre:'academic',maxWords:null};
+ const id=store.createJob(user.id,input,'glm');let repaired=false,repairs=0;
+ const pipeline=new Pipeline({store,policyRoot:resolve('../essay-writer'),dataRoot:dir,maxCost:3,modelCall:async args=>{
+  const phase=args.user.phase;let value;
+  if(phase==='draft'||phase==='repair'){if(phase==='repair'){repaired=true;repairs++;}value={body:repaired?input.text:'The door was there.',changes:[],openQuestions:[]};}
+  else{if(phase==='style'&&!repaired)throw new Error('SYNTHETIC-UNAVAILABLE-REVIEW');value=syntheticRecord(args.user);if(phase==='answer'&&!repaired)value.response.status='rework';}
+  return{value,model:'SYNTHETIC-CONTRACT-FIXTURE',cost:{known:true,cny:0.0001},latencyMs:1};
+ }});
+ await pipeline.run(id);const job=store.internalJob(id);assert.equal(job.state,'completed',job.detail);assert.equal(repairs,1);assert.equal(job.result.quality,'ready-for-human-review',JSON.stringify(job.result.reviewErrors));assert.ok(job.result.workflow.reviews.every(r=>r.state==='recorded'));assert.equal(job.result.deliveryAuthorized,false);
 });
